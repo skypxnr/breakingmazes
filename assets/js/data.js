@@ -5,7 +5,7 @@ const BM = {
   data: null,
 
   get apiBase() {
-    if (location.protocol === 'file:') return 'http://localhost:5000/api';
+    if (location.protocol === 'file:') return 'https://breakingmazes-production.up.railway.app/api';
     return `${location.origin}/api`;
   },
 

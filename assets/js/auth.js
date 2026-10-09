@@ -6,7 +6,7 @@ const Auth = {
   TOKEN_KEY: 'bm_token',
 
   get API_BASE() {
-    if (location.protocol === 'file:') return 'http://localhost:5000/api';
+    if (location.protocol === 'file:') return 'https://breakingmazes-production.up.railway.app/api';
     return `${location.origin}/api`;
   },
 
