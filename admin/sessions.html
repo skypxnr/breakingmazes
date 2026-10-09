@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Sessions — Breaking Mazes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head><body class="admin">
+<div class="admin-layout">
+  <aside class="admin-side">
+    <div class="brand">Breaking <span>Mazes</span></div>
+    <nav>
+      <a href="index.html"><span class="ico">◆</span><span>Dashboard</span></a>
+      <a href="sessions.html" class="active"><span class="ico">▶</span><span>Sessions</span></a>
+      <a href="speakers.html"><span class="ico">◉</span><span>Speakers</span></a>
+      <a href="themes.html"><span class="ico">✎</span><span>Themes</span></a>
+      <a href="clips.html"><span class="ico">✂</span><span>Clips</span></a>
+      <a href="questions.html"><span class="ico">?</span><span>Questions</span></a>
+      <a href="live.html"><span class="ico">●</span><span>Live Control</span></a>
+      <a href="users.html"><span class="ico">◫</span><span>Users &amp; Roles</span></a>
+      <a href="settings.html"><span class="ico">⚙</span><span>Settings</span></a>
+    </nav>
+    <div class="side-foot"><a href="../index.html">← View Site</a><a href="#" id="logoutBtn">Sign Out</a></div>
+  </aside>
+  <main class="admin-main">
+    <div class="admin-top">
+      <div><h1>Sessions</h1><div class="crumb">Manage every conversation, video URL and metadata</div></div>
+      <div><button class="btn btn-gold btn-sm" onclick="openNew()">+ New Session</button></div>
+    </div>
+    <div class="admin-content">
+      <div class="toolbar">
+        <input class="form-control" id="searchBox" placeholder="Search by title or speaker…">
+        <select class="form-control" id="statusFilter" style="max-width:160px">
+          <option value="">All statuses</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+        <div style="flex:1"></div>
+        <span class="small" style="color:var(--slate)" id="countLabel"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:50px">#</th><th>Title</th><th>Speaker</th>
+            <th>YouTube ID</th><th>Status</th><th style="width:160px">Actions</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">New Session</h3>
+      <button class="icon-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="sessionForm">
+        <input type="hidden" name="id">
+        <div class="form-row">
+          <div class="form-group"><label>Session Number</label><input name="number" type="number" class="form-control" required></div>
+          <div class="form-group"><label>Status</label>
+            <select name="status" class="form-control">
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Title</label><input name="title" class="form-control" required placeholder="Can Young India Lead the World?"></div>
+        <div class="form-group"><label>Subtitle</label><input name="subtitle" class="form-control" placeholder="Optional — e.g. AI vs Human Judgement"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Host</label><select name="hostId" class="form-control" id="hostSelect"></select></div>
+          <div class="form-group"><label>Guest Speaker</label><select name="speakerId" class="form-control" id="speakerSelect"></select></div>
+        </div>
+        <div class="form-group"><label>Themes (comma-separated IDs)</label><input name="themes" class="form-control" placeholder="education, ai"></div>
+        <div class="form-row">
+          <div class="form-group"><label>YouTube Video ID</label><input name="youtubeId" class="form-control" placeholder="dQw4w9WgXcQ" oninput="previewYT(this.value)"></div>
+          <div class="form-group"><label>Duration</label><input name="duration" class="form-control" placeholder="52:14"></div>
+        </div>
+        <div class="form-group"><label>Poster Image URL</label><input name="poster" class="form-control" placeholder="assets/img/poster.jpg"></div>
+        <div class="yt-preview" id="ytPreview" style="display:none"></div>
+        <div class="form-group"><label>Synopsis</label><textarea name="synopsis" class="form-control"></textarea></div>
+        <div class="form-group"><label>Pull Quote</label><input name="pullQuote" class="form-control"></div>
+        <div class="form-group"><label>Pills (comma-separated)</label><input name="pills" class="form-control" placeholder="Innovation, Governance, Mass Entrepreneurship"></div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="color:var(--navy);border-color:var(--line-2)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveSession()">Save Session</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+if(!Auth.requireRole(['admin','curator','editor'])) throw 0;
+document.getElementById('logoutBtn').onclick = e => { e.preventDefault(); Auth.logout(); };
+
+let rows = [], editingId = null;
+
+(async () => {
+  const d = await BM.load();
+  rows = [...d.sessions];
+
+  // populate selects
+  document.getElementById('hostSelect').innerHTML = d.speakers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('speakerSelect').innerHTML = d.speakers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+  render();
+  document.getElementById('searchBox').oninput = render;
+  document.getElementById('statusFilter').onchange = render;
+})();
+
+function render(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const st = document.getElementById('statusFilter').value;
+  const list = rows.filter(s => {
+    const sp = BM.speaker(s.speakerId)?.name.toLowerCase() || '';
+    return (!q || s.title.toLowerCase().includes(q) || sp.includes(q)) && (!st || s.status === st);
+  });
+  document.getElementById('countLabel').textContent = `${list.length} sessions`;
+  document.getElementById('rows').innerHTML = list.map(s => {
+    const sp = BM.speaker(s.speakerId);
+    return `<tr>
+      <td>${String(s.number).padStart(2,'0')}</td>
+      <td><strong>${s.title}</strong></td>
+      <td>${sp?.name || ''}</td>
+      <td><code style="font-size:11px">${s.youtubeId || '—'}</code></td>
+      <td><span class="badge ${s.status==='published'?'badge-gold':'badge-draft'}">${s.status}</span></td>
+      <td class="table-actions">
+        <button class="icon-btn" title="Edit" onclick="openEdit('${s.id}')">✎</button>
+        <button class="icon-btn" title="Preview" onclick="window.open('../session.html?id=${s.id}','_blank')">↗</button>
+        <button class="icon-btn" title="Delete" onclick="delSession('${s.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openNew(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'New Session';
+  document.getElementById('sessionForm').reset();
+  document.getElementById('ytPreview').style.display = 'none';
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function openEdit(id){
+  editingId = id;
+  const s = rows.find(x => x.id === id);
+  document.getElementById('modalTitle').textContent = 'Edit Session';
+  const f = document.getElementById('sessionForm');
+  f.id.value = s.id; f.number.value = s.number; f.title.value = s.title;
+  f.subtitle.value = s.subtitle || ''; f.hostId.value = s.hostId; f.speakerId.value = s.speakerId;
+  f.themes.value = (s.themes || []).join(', ');
+  f.youtubeId.value = s.youtubeId || ''; f.duration.value = s.duration || '';
+  f.poster.value = s.poster || ''; f.synopsis.value = s.synopsis || '';
+  f.pullQuote.value = s.pullQuote || ''; f.pills.value = (s.pills || []).join(', ');
+  f.status.value = s.status || 'draft';
+  previewYT(s.youtubeId);
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function closeModal(){ document.getElementById('modalBack').classList.remove('show'); }
+
+function previewYT(id){
+  const box = document.getElementById('ytPreview');
+  if(!id){ box.style.display='none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`;
+}
+
+function saveSession(){
+  const f = document.getElementById('sessionForm');
+  const data = {
+    id: editingId || ('s' + Date.now()),
+    number: parseInt(f.number.value),
+    title: f.title.value, subtitle: f.subtitle.value,
+    hostId: f.hostId.value, speakerId: f.speakerId.value,
+    themes: f.themes.value.split(',').map(x => x.trim()).filter(Boolean),
+    youtubeId: f.youtubeId.value, duration: f.duration.value,
+    poster: f.poster.value, synopsis: f.synopsis.value,
+    pullQuote: f.pullQuote.value,
+    pills: f.pills.value.split(',').map(x => x.trim()).filter(Boolean),
+    status: f.status.value,
+    publishedAt: new Date().toISOString().slice(0,10),
+    featured: false
+  };
+  if(editingId){
+    const i = rows.findIndex(x => x.id === editingId);
+    rows[i] = { ...rows[i], ...data };
+  } else {
+    rows.push(data);
+  }
+  // Persist to localStorage (demo); replace with POST /api/sessions
+  localStorage.setItem('bm_sessions_override', JSON.stringify(rows));
+  closeModal(); render();
+  alert('Saved. (In demo mode this persists locally. Connect server.js to write to content.json.)');
+}
+
+function delSession(id){
+  if(!confirm('Delete this session?')) return;
+  rows = rows.filter(x => x.id !== id);
+  localStorage.setItem('bm_sessions_override', JSON.stringify(rows));
+  render();
+}
+</script>
+</body></html>

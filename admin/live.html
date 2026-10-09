@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Live Control — Breaking Mazes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head><body class="admin">
+<div class="admin-layout">
+  <aside class="admin-side">
+    <div class="brand">Breaking <span>Mazes</span></div>
+    <nav>
+      <a href="index.html"><span class="ico">◆</span><span>Dashboard</span></a>
+      <a href="sessions.html"><span class="ico">▶</span><span>Sessions</span></a>
+      <a href="speakers.html"><span class="ico">◉</span><span>Speakers</span></a>
+      <a href="themes.html"><span class="ico">✎</span><span>Themes</span></a>
+      <a href="clips.html"><span class="ico">✂</span><span>Clips</span></a>
+      <a href="questions.html"><span class="ico">?</span><span>Questions</span></a>
+      <a href="live.html" class="active"><span class="ico">●</span><span>Live Control</span></a>
+      <a href="users.html"><span class="ico">◫</span><span>Users &amp; Roles</span></a>
+      <a href="settings.html"><span class="ico">⚙</span><span>Settings</span></a>
+    </nav>
+    <div class="side-foot"><a href="../index.html">← View Site</a><a href="#" id="logoutBtn">Sign Out</a></div>
+  </aside>
+  <main class="admin-main">
+    <div class="admin-top">
+      <div><h1>Live Control</h1><div class="crumb">Broadcast a live YouTube stream on the public site</div></div>
+    </div>
+    <div class="admin-content">
+      <div class="panel">
+        <div class="panel-head"><h3>Broadcast Settings</h3></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label>Broadcast Status</label>
+            <div class="flex gap-12">
+              <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--navy)">
+                <input type="radio" name="liveActive" value="false" checked> Offline
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--navy)">
+                <input type="radio" name="liveActive" value="true"> Live
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Live Title (shown on /live.html)</label>
+            <input class="form-control" id="liveTitle" placeholder="Can Young India Lead the World?">
+          </div>
+          <div class="form-group">
+            <label>YouTube Live Embed URL</label>
+            <input class="form-control" id="liveUrl" placeholder="https://www.youtube.com/embed/VIDEO_ID">
+            <div class="form-help small" style="color:var(--slate);margin-top:6px">
+              For a scheduled live stream, use <code>https://www.youtube.com/embed/VIDEO_ID</code>. For a channel-wide live, use <code>https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID</code>.
+            </div>
+          </div>
+          <div class="yt-preview" id="livePreview" style="display:none"></div>
+          <div class="flex gap-12 mt-24">
+            <button class="btn btn-gold" onclick="saveLive()">Save &amp; Publish</button>
+            <a href="../live.html" target="_blank" class="btn btn-ghost" style="color:var(--navy);border-color:var(--line-2)">Preview Live Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>How to get the YouTube Live URL</h3></div>
+        <div class="panel-body">
+          <ol style="font-size:14px;line-height:1.9;color:var(--navy);padding-left:20px">
+            <li>Go to YouTube Studio → <strong>Create → Go Live</strong>.</li>
+            <li>Once the stream is created, copy the <strong>Video ID</strong> from the watch URL: <code>youtube.com/watch?v=<span class="gold">VIDEO_ID</span></code>.</li>
+            <li>Paste the embed URL above: <code>https://www.youtube.com/embed/<span class="gold">VIDEO_ID</span></code>.</li>
+            <li>Set status to <strong>Live</strong> and click <strong>Save &amp; Publish</strong>.</li>
+            <li>The public site will now show a red <strong>LIVE</strong> badge in the header linking to <code>/live.html</code>.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+if(!Auth.requireRole(['admin','curator'])) throw 0;
+document.getElementById('logoutBtn').onclick = e => { e.preventDefault(); Auth.logout(); };
+
+(async () => {
+  const d = await BM.load();
+  const site = JSON.parse(localStorage.getItem('bm_site') || 'null') || d.site;
+  document.querySelector(`input[name=liveActive][value="${site.liveActive}"]`).checked = true;
+  document.getElementById('liveTitle').value = site.liveTitle || '';
+  document.getElementById('liveUrl').value = site.liveUrl || '';
+  if(site.liveUrl) previewLive(site.liveUrl);
+})();
+
+document.getElementById('liveUrl').addEventListener('input', e => previewLive(e.target.value));
+
+function previewLive(url){
+  const box = document.getElementById('livePreview');
+  if(!url){ box.style.display='none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = `<iframe src="${url}" allowfullscreen></iframe>`;
+}
+
+function saveLive(){
+  const site = {
+    liveActive: document.querySelector('input[name=liveActive]:checked').value === 'true',
+    liveTitle: document.getElementById('liveTitle').value,
+    liveUrl: document.getElementById('liveUrl').value
+  };
+  localStorage.setItem('bm_site', JSON.stringify(site));
+  alert('Live settings saved. Open /live.html to view.');
+}
+</script>
+</body></html>

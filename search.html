@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Search — Breaking Mazes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<main>
+  <section class="section" style="padding:64px 0 32px">
+    <div class="container-n">
+      <div class="eyebrow mb-16">Find</div>
+      <h1 style="font-size:clamp(36px,4.6vw,56px);margin-bottom:32px">Search the archive</h1>
+      <div style="display:flex;border-bottom:1px solid var(--gold);gap:8px">
+        <input id="q" class="form-control" placeholder="Search sessions, speakers, questions…"
+               style="border:none;background:transparent;font-size:20px;font-family:var(--serif);padding:14px 0">
+        <button class="btn btn-gold btn-sm" style="align-self:center" onclick="run()">Search</button>
+      </div>
+      <div class="flex gap-8 mt-16" style="flex-wrap:wrap">
+        <span class="eyebrow">Popular:</span>
+        <button class="chip" onclick="setQ('education')">education</button>
+        <button class="chip" onclick="setQ('AI')">AI</button>
+        <button class="chip" onclick="setQ('leadership')">leadership</button>
+        <button class="chip" onclick="setQ('India')">India</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding:24px 0 96px">
+    <div class="container-n">
+      <div class="eyebrow mb-16" id="countLabel"></div>
+      <div id="results"></div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+BM.injectHeader('search'); BM.injectFooter();
+
+let d;
+function setQ(v){ document.getElementById('q').value = v; run(); }
+
+function run(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const box = document.getElementById('results');
+  const count = document.getElementById('countLabel');
+
+  if(!q){
+    count.textContent = 'Type to search';
+    box.innerHTML = '';
+    return;
+  }
+
+  const hits = [];
+
+  d.sessions.filter(s => s.status === 'published').forEach(s => {
+    const sp = BM.speaker(s.speakerId)?.name || '';
+    if(s.title.toLowerCase().includes(q) || sp.toLowerCase().includes(q) ||
+       (s.synopsis || '').toLowerCase().includes(q)){
+      hits.push({
+        kind:'Session', title:s.title,
+        snippet: s.synopsis || (sp ? `In conversation with ${sp}.` : ''),
+        meta: `Session ${String(s.number).padStart(2,'0')} · ${sp}`,
+        url: `session.html?id=${s.id}`
+      });
+    }
+  });
+
+  d.speakers.forEach(sp => {
+    if(sp.name.toLowerCase().includes(q) || (sp.role || '').toLowerCase().includes(q)){
+      hits.push({
+        kind:'Speaker', title:sp.name,
+        snippet: sp.role || 'Speaker in the Breaking Mazes archive.',
+        meta:'Speaker',
+        url: `voices.html`
+      });
+    }
+  });
+
+  d.themes.forEach(t => {
+    if(t.name.toLowerCase().includes(q)){
+      hits.push({
+        kind:'Idea', title:t.name,
+        snippet:'Navigate the archive by this theme.',
+        meta:'Theme',
+        url: `ideas.html?theme=${t.id}`
+      });
+    }
+  });
+
+  const extra = JSON.parse(localStorage.getItem('bm_questions_override') || '[]');
+  [...d.studentQuestions, ...extra].forEach(qq => {
+    if((qq.question || '').toLowerCase().includes(q) || (qq.student || '').toLowerCase().includes(q)){
+      hits.push({
+        kind:'Student Q', title:`“${qq.question}”`,
+        snippet:`${qq.student}${qq.year ? ' · ' + qq.year : ''}`,
+        meta:'Student Question',
+        url:'students.html'
+      });
+    }
+  });
+
+  count.textContent = `${hits.length} result${hits.length === 1 ? '' : 's'} for “${q}”`;
+
+  if(!hits.length){
+    box.innerHTML = `<div style="padding:56px;text-align:center;border:1px dashed var(--line)"><p class="muted">No results.</p></div>`;
+    return;
+  }
+
+  box.innerHTML = hits.map(h => `
+    <a href="${h.url}" style="display:grid;grid-template-columns:120px 1fr;gap:32px;padding:24px 0;
+       border-bottom:1px solid var(--line);transition:.2s">
+      <div class="eyebrow" style="color:var(--gold)">${h.kind}</div>
+      <div>
+        <h3 style="font-family:var(--serif);font-size:24px;line-height:1.25;margin-bottom:8px">${hl(h.title, q)}</h3>
+        <p class="small muted">${hl(h.snippet || '', q)}</p>
+        <div class="eyebrow mt-8">${h.meta}</div>
+      </div>
+    </a>`).join('');
+}
+
+function hl(text, q){
+  if(!q) return text;
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')','ig');
+  return String(text).replace(re, '<span style="color:var(--gold)">$1</span>');
+}
+
+document.getElementById('q').addEventListener('keydown', e => { if(e.key === 'Enter') run(); });
+
+(async () => {
+  d = await BM.load();
+  const pre = new URLSearchParams(location.search).get('q');
+  if(pre){ document.getElementById('q').value = pre; run(); }
+})();
+</script>
+</body>
+</html>

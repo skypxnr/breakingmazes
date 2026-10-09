@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Settings — Breaking Mazes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+<div class="admin-layout">
+  <aside class="admin-side">
+    <div class="brand">Breaking <span>Mazes</span></div>
+    <nav>
+      <a href="index.html"><span class="ico">◆</span><span>Dashboard</span></a>
+      <a href="sessions.html"><span class="ico">▶</span><span>Sessions</span></a>
+      <a href="speakers.html"><span class="ico">◉</span><span>Speakers</span></a>
+      <a href="themes.html"><span class="ico">✎</span><span>Themes</span></a>
+      <a href="clips.html"><span class="ico">✂</span><span>Clips</span></a>
+      <a href="questions.html"><span class="ico">?</span><span>Questions</span></a>
+      <a href="live.html"><span class="ico">●</span><span>Live Control</span></a>
+      <a href="users.html"><span class="ico">◫</span><span>Users &amp; Roles</span></a>
+      <a href="settings.html" class="active"><span class="ico">⚙</span><span>Settings</span></a>
+    </nav>
+    <div class="side-foot"><a href="../index.html">← View Site</a><a href="#" id="logoutBtn">Sign Out</a></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <div>
+        <h1>Site Settings</h1>
+        <div class="crumb">Brand, navigation, homepage hero and integrations</div>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="saveAll()">Save Changes</button>
+    </div>
+
+    <div class="admin-content">
+      <div id="saveAlert"></div>
+
+      <!-- BRAND -->
+      <div class="panel">
+        <div class="panel-head"><h3>Brand</h3></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Site Title</label>
+              <input class="form-control" id="brandTitle" value="Breaking Mazes">
+            </div>
+            <div class="form-group">
+              <label>Tagline</label>
+              <input class="form-control" id="brandTagline" value="A Leadership Dialogue Series">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Meta Description (SEO)</label>
+            <textarea class="form-control" id="brandDesc">Conversations that unmake the maze. Breaking Mazes is a leadership dialogue series bringing students face to face with the people who have shaped institutions.</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLORS -->
+      <div class="panel">
+        <div class="panel-head"><h3>Brand Colours</h3></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Navy (primary)</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="color" id="cNavy" value="#0A1B33" style="width:46px;height:40px;border:1px solid var(--line-2);background:transparent">
+                <input class="form-control" id="cNavyHex" value="#0A1B33">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Gold (accent)</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="color" id="cGold" value="#C7A45B" style="width:46px;height:40px;border:1px solid var(--line-2);background:transparent">
+                <input class="form-control" id="cGoldHex" value="#C7A45B">
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Ivory</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="color" id="cIvory" value="#F5F1E8" style="width:46px;height:40px;border:1px solid var(--line-2);background:transparent">
+                <input class="form-control" id="cIvoryHex" value="#F5F1E8">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Deep Blue</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="color" id="cDeep" value="#174B73" style="width:46px;height:40px;border:1px solid var(--line-2);background:transparent">
+                <input class="form-control" id="cDeepHex" value="#174B73">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOMEPAGE -->
+      <div class="panel">
+        <div class="panel-head"><h3>Homepage Hero</h3></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label>Featured Session</label>
+            <select class="form-control" id="featuredSessionSelect"></select>
+            <div class="form-help" style="color:var(--slate);font-size:12px;margin-top:6px">
+              This session appears in the large hero block on the homepage.
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Hero Fallback Image (used when poster is missing)</label>
+            <input class="form-control" id="heroFallback" placeholder="assets/img/hero.jpg">
+          </div>
+        </div>
+      </div>
+
+      <!-- SOCIAL -->
+      <div class="panel">
+        <div class="panel-head"><h3>Social &amp; Contact</h3></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group"><label>YouTube URL</label><input class="form-control" id="sYouTube" placeholder="https://youtube.com/@breakingmazes"></div>
+            <div class="form-group"><label>Instagram URL</label><input class="form-control" id="sInstagram" placeholder="https://instagram.com/breakingmazes"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>LinkedIn URL</label><input class="form-control" id="sLinkedIn" placeholder="https://linkedin.com/company/breakingmazes"></div>
+            <div class="form-group"><label>Contact Email</label><input class="form-control" id="sEmail" placeholder="hello@breakingmazes.com"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTEGRATIONS -->
+      <div class="panel">
+        <div class="panel-head"><h3>Integrations</h3></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label>YouTube Channel ID (for live_stream embed)</label>
+            <input class="form-control" id="ytChannelId" placeholder="UCxxxxxxxxxxxxxxxxxxxxxx">
+            <div class="form-help" style="color:var(--slate);font-size:12px;margin-top:6px">
+              Used to auto-embed your channel's live broadcast on /live.html when no specific video ID is set.
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Analytics ID (optional)</label>
+            <input class="form-control" id="analyticsId" placeholder="G-XXXXXXXXXX">
+          </div>
+        </div>
+      </div>
+
+      <!-- DANGER -->
+      <div class="panel" style="border-color:#b14747">
+        <div class="panel-head" style="border-bottom-color:#b14747">
+          <h3 style="color:#b14747">Data</h3>
+        </div>
+        <div class="panel-body">
+          <p style="font-size:13.5px;color:var(--slate);margin-bottom:14px">
+            Export the current content as JSON, or reset all local overrides (sessions, clips, questions added via the admin).
+          </p>
+          <div class="flex gap-12" style="flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" style="color:var(--navy);border-color:var(--line-2)" onclick="exportAll()">Export JSON</button>
+            <button class="btn btn-danger btn-sm" onclick="resetOverrides()">Reset Local Overrides</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+if(!Auth.requireRole(['admin'])) throw 0;
+document.getElementById('logoutBtn').onclick = e => { e.preventDefault(); Auth.logout(); };
+
+let d;
+
+(async () => {
+  d = await BM.load();
+  // Restore saved settings
+  const saved = JSON.parse(localStorage.getItem('bm_settings') || '{}');
+  Object.entries(saved).forEach(([k, v]) => {
+    const el = document.getElementById(k);
+    if(el) el.value = v;
+  });
+
+  // Featured session select
+  const sel = document.getElementById('featuredSessionSelect');
+  sel.innerHTML = d.sessions.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+  if(saved.featuredSessionSelect) sel.value = saved.featuredSessionSelect;
+
+  // Color pickers sync
+  ['Navy','Gold','Ivory','Deep'].forEach(c => {
+    const cp = document.getElementById('c'+c);
+    const tx = document.getElementById('c'+c+'Hex');
+    if(!cp || !tx) return;
+    cp.oninput = () => tx.value = cp.value;
+    tx.oninput = () => { if(/^#[0-9a-f]{6}$/i.test(tx.value)) cp.value = tx.value; };
+  });
+})();
+
+function collect(){
+  return {
+    brandTitle: document.getElementById('brandTitle').value,
+    brandTagline: document.getElementById('brandTagline').value,
+    brandDesc: document.getElementById('brandDesc').value,
+    cNavy: document.getElementById('cNavyHex').value,
+    cGold: document.getElementById('cGoldHex').value,
+    cIvory: document.getElementById('cIvoryHex').value,
+    cDeep: document.getElementById('cDeepHex').value,
+    featuredSessionSelect: document.getElementById('featuredSessionSelect').value,
+    heroFallback: document.getElementById('heroFallback').value,
+    sYouTube: document.getElementById('sYouTube').value,
+    sInstagram: document.getElementById('sInstagram').value,
+    sLinkedIn: document.getElementById('sLinkedIn').value,
+    sEmail: document.getElementById('sEmail').value,
+    ytChannelId: document.getElementById('ytChannelId').value,
+    analyticsId: document.getElementById('analyticsId').value
+  };
+}
+
+function saveAll(){
+  localStorage.setItem('bm_settings', JSON.stringify(collect()));
+  const a = document.getElementById('saveAlert');
+  a.innerHTML = '<div class="alert alert-success">Settings saved locally. Connect server.js to persist globally.</div>';
+  setTimeout(() => a.innerHTML = '', 3000);
+}
+
+function exportAll(){
+  const dump = {
+    settings: collect(),
+    sessions: JSON.parse(localStorage.getItem('bm_sessions_override') || 'null') || d.sessions,
+    clips: JSON.parse(localStorage.getItem('bm_clips_override') || 'null') || [],
+    questions: JSON.parse(localStorage.getItem('bm_questions_override') || 'null') || [],
+    site: JSON.parse(localStorage.getItem('bm_site') || 'null') || d.site
+  };
+  const blob = new Blob([JSON.stringify(dump, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'breaking-mazes-export.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetOverrides(){
+  if(!confirm('This will remove all local edits to sessions, clips and questions. Continue?')) return;
+  ['bm_sessions_override','bm_clips_override','bm_questions_override','bm_settings','bm_site']
+    .forEach(k => localStorage.removeItem(k));
+  alert('Local overrides cleared. Reloading…');
+  location.reload();
+}
+</script>
+</body>
+</html>

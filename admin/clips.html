@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Clips — Breaking Mazes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+<div class="admin-layout">
+  <aside class="admin-side">
+    <div class="brand">Breaking <span>Mazes</span></div>
+    <nav>
+      <a href="index.html"><span class="ico">◆</span><span>Dashboard</span></a>
+      <a href="sessions.html"><span class="ico">▶</span><span>Sessions</span></a>
+      <a href="speakers.html"><span class="ico">◉</span><span>Speakers</span></a>
+      <a href="themes.html"><span class="ico">✎</span><span>Themes</span></a>
+      <a href="clips.html" class="active"><span class="ico">✂</span><span>Clips</span></a>
+      <a href="questions.html"><span class="ico">?</span><span>Questions</span></a>
+      <a href="live.html"><span class="ico">●</span><span>Live Control</span></a>
+      <a href="users.html"><span class="ico">◫</span><span>Users &amp; Roles</span></a>
+      <a href="settings.html"><span class="ico">⚙</span><span>Settings</span></a>
+    </nav>
+    <div class="side-foot"><a href="../index.html">← View Site</a><a href="#" id="logoutBtn">Sign Out</a></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <div>
+        <h1>Clips &amp; Selected Moments</h1>
+        <div class="crumb">Short excerpts that appear in “The Maze” section</div>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="openNew()">+ New Clip</button>
+    </div>
+
+    <div class="admin-content">
+      <div class="stats">
+        <div class="stat"><div class="label">Total Clips</div><div class="value" id="statClips">0</div><div class="delta">Across all sessions</div></div>
+        <div class="stat"><div class="label">Featured</div><div class="value" id="statFeatured">0</div><div class="delta">Shown on homepage</div></div>
+        <div class="stat"><div class="label">Avg Duration</div><div class="value" id="statAvg">—</div><div class="delta">Minutes</div></div>
+        <div class="stat"><div class="label">Sessions w/ Clips</div><div class="value" id="statSessions">0</div><div class="delta">Coverage</div></div>
+      </div>
+
+      <div class="toolbar">
+        <input class="form-control" id="searchBox" placeholder="Search clips…">
+        <select class="form-control" id="sessionFilter" style="max-width:260px"></select>
+        <div style="flex:1"></div>
+        <span class="small" style="color:var(--slate)" id="countLabel"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:140px">Thumbnail</th>
+              <th>Title</th>
+              <th>Session</th>
+              <th>Time</th>
+              <th>Featured</th>
+              <th style="width:150px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">New Clip</h3>
+      <button class="icon-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="clipForm">
+        <input type="hidden" name="id">
+        <div class="form-group">
+          <label>Parent Session</label>
+          <select name="sessionId" class="form-control" id="sessionSelect"></select>
+        </div>
+        <div class="form-group">
+          <label>Clip Title</label>
+          <input name="title" class="form-control" required placeholder="On power without ego">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" class="form-control" placeholder="Optional context for the clip"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start (mm:ss)</label>
+            <input name="start" class="form-control" placeholder="03:12" required>
+          </div>
+          <div class="form-group">
+            <label>End (mm:ss)</label>
+            <input name="end" class="form-control" placeholder="05:40">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>YouTube Video ID (optional — for standalone clip)</label>
+          <input name="youtubeId" class="form-control" placeholder="Leave blank to use parent session timestamp">
+          <div class="form-help small" style="color:var(--slate);margin-top:6px">
+            If blank, the clip will deep-link into the parent YouTube video at the start timestamp.
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Thumbnail URL</label>
+          <input name="thumb" class="form-control" placeholder="https://...">
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" name="featured" id="featCheck">
+          <label for="featCheck" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--navy);margin:0">
+            Feature this clip on the homepage
+          </label>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="color:var(--navy);border-color:var(--line-2)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveClip()">Save Clip</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+if(!Auth.requireRole(['admin','curator','editor'])) throw 0;
+document.getElementById('logoutBtn').onclick = e => { e.preventDefault(); Auth.logout(); };
+
+let clips = [], sessions = [], d = null, editingId = null;
+
+(async () => {
+  d = await BM.load();
+  sessions = d.sessions;
+
+  // Seed demo clips if none stored
+  const stored = JSON.parse(localStorage.getItem('bm_clips_override') || 'null');
+  clips = stored || [
+    {id:'c1', sessionId:'s07', title:'On power without ego', start:'03:12', end:'05:40', featured:true, youtubeId:'', thumb:'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80'},
+    {id:'c2', sessionId:'s06', title:'Why institutions resist change', start:'11:40', end:'14:05', featured:true, youtubeId:'', thumb:'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=80'},
+    {id:'c3', sessionId:'s05', title:'The first 90 days', start:'24:18', end:'26:40', featured:false, youtubeId:'', thumb:'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80'}
+  ];
+
+  // Filters
+  document.getElementById('sessionSelect').innerHTML =
+    sessions.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+  document.getElementById('sessionFilter').innerHTML =
+    `<option value="">All sessions</option>` +
+    sessions.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+
+  renderStats();
+  render();
+
+  document.getElementById('searchBox').oninput = render;
+  document.getElementById('sessionFilter').onchange = render;
+})();
+
+function renderStats(){
+  document.getElementById('statClips').textContent = clips.length;
+  document.getElementById('statFeatured').textContent = clips.filter(c => c.featured).length;
+  const avg = clips.length
+    ? Math.round(clips.reduce((a, c) => a + (toSec(c.end) - toSec(c.start)), 0) / clips.length / 60)
+    : 0;
+  document.getElementById('statAvg').textContent = avg ? `${avg}` : '—';
+  document.getElementById('statSessions').textContent =
+    new Set(clips.map(c => c.sessionId)).size;
+}
+
+function render(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const sf = document.getElementById('sessionFilter').value;
+  const list = clips.filter(c =>
+    (!q || c.title.toLowerCase().includes(q)) &&
+    (!sf || c.sessionId === sf)
+  );
+
+  document.getElementById('countLabel').textContent = `${list.length} clips`;
+
+  document.getElementById('rows').innerHTML = list.length
+    ? list.map(c => {
+        const s = sessions.find(x => x.id === c.sessionId);
+        const thumb = c.thumb || (s ? BM.ytThumb(s.youtubeId) : '');
+        return `
+          <tr>
+            <td>
+              <div style="width:120px;aspect-ratio:16/9;overflow:hidden;background:#000;border:1px solid var(--line-2)">
+                <img src="${thumb}" style="width:100%;height:100%;object-fit:cover" alt="">
+              </div>
+            </td>
+            <td><strong>${c.title}</strong></td>
+            <td>${s ? s.title : c.sessionId}</td>
+            <td><code style="font-size:11.5px">${c.start} – ${c.end || '…'}</code></td>
+            <td>${c.featured ? '<span class="badge badge-gold">Featured</span>' : '<span class="badge">—</span>'}</td>
+            <td class="table-actions">
+              <button class="icon-btn" title="Edit" onclick="openEdit('${c.id}')">✎</button>
+              <button class="icon-btn" title="Preview" onclick="previewClip('${c.id}')">▶</button>
+              <button class="icon-btn" title="Delete" onclick="delClip('${c.id}')">🗑</button>
+            </td>
+          </tr>`;
+      }).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--slate)">No clips found.</td></tr>`;
+}
+
+function previewClip(id){
+  const c = clips.find(x => x.id === id);
+  const s = sessions.find(x => x.id === c.sessionId);
+  const yt = c.youtubeId || s?.youtubeId;
+  if(!yt){ alert('No YouTube ID available for this clip.'); return; }
+  const t = toSec(c.start);
+  const url = `https://www.youtube.com/watch?v=${yt}&t=${t}s`;
+  window.open(url, '_blank');
+}
+
+function openNew(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'New Clip';
+  document.getElementById('clipForm').reset();
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function openEdit(id){
+  const c = clips.find(x => x.id === id);
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Clip';
+  const f = document.getElementById('clipForm');
+  f.id.value = c.id;
+  f.sessionId.value = c.sessionId;
+  f.title.value = c.title;
+  f.description.value = c.description || '';
+  f.start.value = c.start;
+  f.end.value = c.end || '';
+  f.youtubeId.value = c.youtubeId || '';
+  f.thumb.value = c.thumb || '';
+  f.featured.checked = !!c.featured;
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function closeModal(){ document.getElementById('modalBack').classList.remove('show'); }
+
+function saveClip(){
+  const f = document.getElementById('clipForm');
+  const data = {
+    id: editingId || ('c' + Date.now()),
+    sessionId: f.sessionId.value,
+    title: f.title.value,
+    description: f.description.value,
+    start: f.start.value,
+    end: f.end.value,
+    youtubeId: f.youtubeId.value,
+    thumb: f.thumb.value,
+    featured: f.featured.checked
+  };
+  if(editingId){
+    const i = clips.findIndex(x => x.id === editingId);
+    clips[i] = { ...clips[i], ...data };
+  } else {
+    clips.push(data);
+  }
+  localStorage.setItem('bm_clips_override', JSON.stringify(clips));
+  closeModal();
+  renderStats();
+  render();
+  alert('Clip saved.');
+}
+
+function delClip(id){
+  if(!confirm('Delete this clip?')) return;
+  clips = clips.filter(x => x.id !== id);
+  localStorage.setItem('bm_clips_override', JSON.stringify(clips));
+  renderStats();
+  render();
+}
+
+function toSec(ts){
+  if(!ts) return 0;
+  const p = ts.split(':').map(Number);
+  return p.length === 2 ? p[0]*60 + p[1] : p[0]*3600 + p[1]*60 + p[2];
+}
+</script>
+</body>
+</html>

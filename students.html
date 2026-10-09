@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Student Voices — Breaking Mazes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<main>
+  <section class="section" style="padding:52px 0 32px">
+    <div class="container">
+      <div class="eyebrow mb-16">In the Room</div>
+      <h1 style="font-size:clamp(40px,5.5vw,72px)">Student Voices</h1>
+      <p class="muted mt-16" style="max-width:700px;font-size:16px">
+        Breaking Mazes treats students as participants, not audiences. Their questions shape the conversation — and their voices are archived alongside the speakers'.
+      </p>
+    </div>
+  </section>
+
+  <section style="padding:0 0 48px">
+    <div class="container">
+      <div style="aspect-ratio:21/9;overflow:hidden;border:1px solid var(--line)">
+        <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80"
+             alt="Students in dialogue" style="width:100%;height:100%;object-fit:cover">
+      </div>
+    </div>
+  </section>
+
+  <!-- Submit question CTA -->
+  <section class="section" style="padding:0 0 48px">
+    <div class="container" style="padding:32px;border:1px solid var(--line);background:var(--navy-2);
+         display:grid;grid-template-columns:1.4fr 1fr;gap:32px;align-items:center">
+      <div>
+        <div class="eyebrow mb-8">Submit a Question</div>
+        <h2 style="font-size:28px;margin-bottom:12px">Ask the next speaker.</h2>
+        <p class="muted" style="font-size:15px">
+          Your question will be reviewed by the curator and, if selected, will be asked live — and archived here.
+        </p>
+      </div>
+      <div>
+        <select class="form-control mb-8" id="qSession"></select>
+        <input class="form-control mb-8" id="qName" placeholder="Your name">
+        <input class="form-control mb-8" id="qEmail" type="email" placeholder="Your email">
+        <input class="form-control mb-8" id="qYear" placeholder="Year / Institution">
+        <textarea class="form-control mb-8" id="qText" placeholder="Your question…"></textarea>
+        <button class="btn btn-gold btn-block" onclick="submitQuestion()">Submit Question</button>
+        <div id="qAlert" class="mt-8 small"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter + list -->
+  <section class="section" style="padding:24px 0 80px">
+    <div class="container">
+      <div class="between center mb-24" style="display:flex;padding-bottom:14px;border-bottom:1px solid var(--line);gap:16px;flex-wrap:wrap">
+        <h2 style="font-size:32px">Questions from the Room</h2>
+        <span class="eyebrow" id="qCount">0 questions</span>
+      </div>
+      <div id="questionsList" style="display:grid;gap:0"></div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+(async () => {
+  BM.injectHeader('students');
+  BM.injectFooter();
+  const d = await BM.load();
+  const allQ = d.studentQuestions;
+
+  const sessionSelect = document.getElementById('qSession');
+  sessionSelect.innerHTML = BM.publishedSessions().map(s =>
+    `<option value="${s.id}">Session ${String(s.number).padStart(2,'0')}: ${s.title}</option>`
+  ).join('');
+
+  document.getElementById('qCount').textContent =
+    `${allQ.length} question${allQ.length === 1 ? '' : 's'}`;
+
+  document.getElementById('questionsList').innerHTML = allQ.map((q, i) => {
+    const s = d.sessions.find(x => x.id === q.sessionId);
+    return `
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:32px;padding:32px 0;border-bottom:1px solid var(--line);align-items:start">
+        <div>
+          <div class="eyebrow mb-8">Question ${String(i+1).padStart(2,'0')}</div>
+          <div class="serif" style="font-size:16px;color:var(--gold);">${q.student}</div>
+          <div class="small muted">${q.year || ''}</div>
+          ${s ? `<a href="session.html?id=${s.id}" class="small" style="color:var(--deep);border-bottom:1px solid var(--gold);margin-top:8px;display:inline-block">From: ${s.title}</a>` : ''}
+        </div>
+        <blockquote style="font-family:var(--serif);font-size:clamp(20px,2.2vw,28px);line-height:1.35;font-weight:400">
+          “${q.question}”
+        </blockquote>
+      </div>`;
+  }).join('') || `<div style="padding:56px;text-align:center;border:1px dashed var(--line)"><p class="muted">No questions yet.</p></div>`;
+})();
+
+async function submitQuestion(){
+  const name = document.getElementById('qName').value.trim();
+  const email = document.getElementById('qEmail').value.trim();
+  const year = document.getElementById('qYear').value.trim();
+  const text = document.getElementById('qText').value.trim();
+  const sessionId = document.getElementById('qSession').value;
+  const alert = document.getElementById('qAlert');
+  if(!name || !email || !text){
+    alert.innerHTML = `<span style="color:#e08a8a">Name, email, and question are required.</span>`;
+    return;
+  }
+  try {
+    const r = await fetch(`${BM.apiBase}/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        student_name: name,
+        student_email: email,
+        student_year: year,
+        question_text: text
+      })
+    });
+    if (!r.ok) throw new Error('Submission failed');
+    alert.innerHTML = `<span style="color:#8fce9f">Thank you — your question has been submitted for review.</span>`;
+    document.getElementById('qName').value = '';
+    document.getElementById('qEmail').value = '';
+    document.getElementById('qYear').value = '';
+    document.getElementById('qText').value = '';
+  } catch {
+    alert.innerHTML = `<span style="color:#e08a8a">Could not submit. Please try again later.</span>`;
+  }
+}
+</script>
+</body>
+</html>

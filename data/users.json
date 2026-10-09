@@ -1,0 +1,6 @@
+[
+  {"id":"u1","name":"Peer Suhail","email":"admin@breakingmazes.com","password":"admin123","role":"admin"},
+  {"id":"u2","name":"Curator","email":"curator@breakingmazes.com","password":"curator123","role":"curator"},
+  {"id":"u3","name":"Editor","email":"editor@breakingmazes.com","password":"editor123","role":"editor"},
+  {"id":"u4","name":"Student","email":"student@breakingmazes.com","password":"student123","role":"student"}
+]

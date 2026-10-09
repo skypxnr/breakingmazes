@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Dashboard — Breaking Mazes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head><body class="admin">
+<div class="admin-layout">
+  <aside class="admin-side">
+    <div class="brand">Breaking <span>Mazes</span></div>
+    <nav>
+      <a href="index.html" class="active"><span class="ico">◆</span><span>Dashboard</span></a>
+      <a href="sessions.html"><span class="ico">▶</span><span>Sessions</span></a>
+      <a href="speakers.html"><span class="ico">◉</span><span>Speakers</span></a>
+      <a href="themes.html"><span class="ico">✎</span><span>Themes</span></a>
+      <a href="clips.html"><span class="ico">✂</span><span>Clips</span></a>
+      <a href="questions.html"><span class="ico">?</span><span>Questions</span></a>
+      <a href="live.html"><span class="ico">●</span><span>Live Control</span></a>
+      <a href="users.html"><span class="ico">◫</span><span>Users &amp; Roles</span></a>
+      <a href="settings.html"><span class="ico">⚙</span><span>Settings</span></a>
+    </nav>
+    <div class="side-foot">
+      <a href="../index.html">← View Site</a>
+      <a href="#" id="logoutBtn">Sign Out</a>
+    </div>
+  </aside>
+  <main class="admin-main">
+    <div class="admin-top">
+      <div><h1>Dashboard</h1><div class="crumb">Overview of the Breaking Mazes archive</div></div>
+      <div class="flex gap-12">
+        <a href="sessions.html" class="btn btn-gold btn-sm">+ New Session</a>
+      </div>
+    </div>
+    <div class="admin-content">
+      <div class="stats">
+        <div class="stat"><div class="label">Sessions</div><div class="value" id="statSessions">0</div><div class="delta">Published + drafts</div></div>
+        <div class="stat"><div class="label">Speakers</div><div class="value" id="statSpeakers">0</div><div class="delta">In archive</div></div>
+        <div class="stat"><div class="label">Student Questions</div><div class="value" id="statQuestions">0</div><div class="delta">Awaiting moderation</div></div>
+        <div class="stat"><div class="label">Live Status</div><div class="value" id="statLive">—</div><div class="delta" id="statLiveSub">Configure in Live Control</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Recent Sessions</h3><a href="sessions.html" class="small" style="color:var(--slate)">Manage →</a></div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Title</th><th>Speaker</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="recentSessions"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+if(!Auth.requireRole(['admin','curator','editor'])) throw 0;
+document.getElementById('logoutBtn').onclick = e => { e.preventDefault(); Auth.logout(); };
+(async () => {
+  const d = await BM.load();
+  document.getElementById('statSessions').textContent = d.sessions.length;
+  document.getElementById('statSpeakers').textContent = d.speakers.length;
+  document.getElementById('statQuestions').textContent = d.studentQuestions.length;
+  document.getElementById('statLive').textContent = d.site.liveActive ? 'LIVE' : 'Offline';
+  document.getElementById('recentSessions').innerHTML = d.sessions.slice(0,5).map(s => {
+    const sp = BM.speaker(s.speakerId);
+    return `<tr>
+      <td>${String(s.number).padStart(2,'0')}</td>
+      <td>${s.title}</td>
+      <td>${sp?.name || ''}</td>
+      <td><span class="badge ${s.status==='published'?'badge-gold':'badge-draft'}">${s.status}</span></td>
+      <td><a href="sessions.html?id=${s.id}" class="icon-btn">✎</a></td>
+    </tr>`;
+  }).join('');
+})();
+</script>
+</body></html>

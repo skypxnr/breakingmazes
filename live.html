@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Live — Breaking Mazes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<main>
+  <section class="section" style="padding-top:32px">
+    <div class="container">
+      <div class="live-strip mb-16"><span class="dot"></span> Live Broadcast</div>
+      <h1 id="liveTitle" style="font-size:clamp(34px,5vw,64px);margin-bottom:16px">Can Young India Lead the World?</h1>
+      <p class="muted mb-24" id="liveSub">Streaming live now from the Breaking Mazes studio.</p>
+    </div>
+  </section>
+  <section style="padding:0 0 60px">
+    <div class="container"><div id="livePlayer"></div></div>
+  </section>
+  <section class="section" style="background:var(--navy-2);border-top:1px solid var(--line)">
+    <div class="container">
+      <div class="section-head"><h2>Past Broadcasts</h2></div>
+      <div class="grid grid-3" id="pastGrid"></div>
+    </div>
+  </section>
+</main>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/player.js"></script>
+<script>
+(async () => {
+  BM.injectHeader(); BM.injectFooter();
+  const d = await BM.load();
+  const live = d.site;
+  document.getElementById('liveTitle').textContent = live.liveTitle || 'Live Now';
+  // Use YouTube live URL (embed form) — replace via admin
+  Player.render('#livePlayer', { live: true, src: live.liveUrl || 'https://www.youtube.com/embed/live_stream?channel=UCxxxxxxxx' });
+  document.getElementById('pastGrid').innerHTML = BM.publishedSessions().slice(0,3).map(BM.cardHTML.bind(BM)).join('');
+})();
+</script>
+</body>
+</html>

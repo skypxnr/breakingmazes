@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Session — Breaking Mazes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<main>
+  <section class="section" style="padding-top:32px">
+    <div class="container">
+      <div class="eyebrow mb-16" id="crumb">Session</div>
+      <h1 id="sessionTitle" style="font-size:clamp(32px,4.2vw,58px);margin-bottom:20px"></h1>
+      <div class="flex gap-24 mb-24" id="sessionMeta" style="flex-wrap:wrap;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)"></div>
+    </div>
+  </section>
+
+  <section style="padding:0 0 40px">
+    <div class="container">
+      <div id="player"></div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:20px">
+    <div class="container" style="display:grid;grid-template-columns:2fr 1fr;gap:56px">
+      <div>
+        <h2 style="margin-bottom:20px">Synopsis</h2>
+        <p id="synopsis" style="font-size:16.5px;line-height:1.8;margin-bottom:28px"></p>
+        <blockquote id="pullQuote" style="font-family:var(--serif);font-style:italic;font-size:28px;line-height:1.3;color:var(--gold);border-left:2px solid var(--gold);padding-left:24px;margin:32px 0"></blockquote>
+      </div>
+      <aside>
+        <div class="mb-24">
+          <div class="eyebrow mb-16">Key Themes</div>
+          <div id="themes" class="flex gap-8" style="flex-wrap:wrap"></div>
+        </div>
+        <div class="mb-24">
+          <div class="eyebrow mb-16">Selected Moments</div>
+          <div id="moments" class="small muted"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--navy-2);border-top:1px solid var(--line)">
+    <div class="container">
+      <div class="section-head"><h2>Student Voices</h2><span class="num">From the Room</span></div>
+      <div class="grid grid-2" id="questions"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head"><h2>Related Sessions</h2></div>
+      <div class="grid grid-3" id="related"></div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/player.js"></script>
+<script>
+(async () => {
+  BM.injectHeader('conversations'); BM.injectFooter();
+  const d = await BM.load();
+  if (!d.sessions.length) {
+    document.getElementById('sessionTitle').textContent = 'Session unavailable';
+    return;
+  }
+  const id = new URLSearchParams(location.search).get('id') || d.sessions[0].id;
+  const s = BM.session(id) || d.sessions[0];
+  const host = BM.speaker(s.hostId), guest = BM.speaker(s.speakerId);
+
+  document.title = `${s.title} — Breaking Mazes`;
+  document.getElementById('crumb').textContent = `Session ${String(s.number).padStart(2,'0')} · ${(s.themes||[]).map(t=>BM.theme(t)?.name).filter(Boolean).join(' · ')}`;
+  document.getElementById('sessionTitle').textContent = s.title;
+  document.getElementById('sessionMeta').innerHTML = `
+    <span>Host: <strong>${host.name}</strong></span>
+    <span>Guest: <strong>${guest.name}</strong></span>
+    <span>Duration: <strong>${s.duration}</strong></span>
+    <span>${s.publishedAt}</span>`;
+  document.getElementById('synopsis').textContent = s.synopsis || '';
+  document.getElementById('pullQuote').textContent = s.pullQuote ? `“${s.pullQuote}”` : '';
+  document.getElementById('themes').innerHTML = (s.themes||[]).map(t => `<a href="ideas.html?theme=${t}" class="chip">${BM.theme(t)?.name}</a>`).join('');
+  document.getElementById('moments').innerHTML = `<p>03:12 — On power without ego</p><p>11:40 — Why institutions resist</p><p>24:18 — The first 90 days</p>`;
+
+  // PLAYER — YouTube embed
+  Player.render('#player', {
+    type: 'youtube',
+    youtubeId: s.youtubeId,
+    poster: s.poster
+  });
+
+  // Student Qs
+  const qs = d.studentQuestions.filter(q => q.sessionId === s.id);
+  document.getElementById('questions').innerHTML = qs.length ? qs.map(q => `
+    <div class="card" style="padding:24px">
+      <div class="eyebrow mb-8">${q.student} · ${q.year}</div>
+      <h4 style="font-family:var(--serif);font-size:20px;line-height:1.35">“${q.question}”</h4>
+    </div>`).join('') : '<p class="muted">Questions from this session will appear here.</p>';
+
+  // Related
+  const related = BM.publishedSessions().filter(x => x.id !== s.id && (x.themes||[]).some(t => (s.themes||[]).includes(t))).slice(0,3);
+  document.getElementById('related').innerHTML = related.map(BM.cardHTML.bind(BM)).join('');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Themes — Breaking Mazes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+<div class="admin-layout">
+  <aside class="admin-side">
+    <div class="brand">Breaking <span>Mazes</span></div>
+    <nav>
+      <a href="index.html"><span class="ico">◆</span><span>Dashboard</span></a>
+      <a href="sessions.html"><span class="ico">▶</span><span>Sessions</span></a>
+      <a href="speakers.html"><span class="ico">◉</span><span>Speakers</span></a>
+      <a href="themes.html" class="active"><span class="ico">✎</span><span>Themes</span></a>
+      <a href="clips.html"><span class="ico">✂</span><span>Clips</span></a>
+      <a href="questions.html"><span class="ico">?</span><span>Questions</span></a>
+      <a href="live.html"><span class="ico">●</span><span>Live Control</span></a>
+      <a href="users.html"><span class="ico">◫</span><span>Users &amp; Roles</span></a>
+      <a href="settings.html"><span class="ico">⚙</span><span>Settings</span></a>
+    </nav>
+    <div class="side-foot"><a href="../index.html">← View Site</a><a href="#" id="logoutBtn">Sign Out</a></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <div><h1>Themes</h1><div class="crumb">Ideas that organise the archive</div></div>
+      <button class="btn btn-gold btn-sm" onclick="openNew()">+ Add Theme</button>
+    </div>
+
+    <div class="admin-content">
+      <div class="stats">
+        <div class="stat"><div class="label">Total Themes</div><div class="value" id="statThemes">0</div><div class="delta">Across the archive</div></div>
+        <div class="stat"><div class="label">Most Used</div><div class="value" id="statTop" style="font-size:20px">—</div><div class="delta" id="statTopCount">sessions</div></div>
+        <div class="stat"><div class="label">Untagged</div><div class="value" id="statUnused">0</div><div class="delta">No sessions yet</div></div>
+        <div class="stat"><div class="label">Avg / Theme</div><div class="value" id="statAvg">0</div><div class="delta">Sessions</div></div>
+      </div>
+
+      <div class="toolbar">
+        <input class="form-control" id="searchBox" placeholder="Search themes…">
+        <div style="flex:1"></div>
+        <span class="small" style="color:var(--slate)" id="countLabel"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:70px">#</th>
+              <th>Theme</th>
+              <th>Slug</th>
+              <th>Sessions</th>
+              <th style="width:150px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">New Theme</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <form id="thForm">
+        <input type="hidden" name="id">
+        <div class="form-group"><label>Theme Name</label><input name="name" class="form-control" required placeholder="Education"></div>
+        <div class="form-group">
+          <label>Slug</label>
+          <input name="slug" class="form-control" placeholder="education" oninput="slugPreview(this)">
+          <div class="form-help" style="color:var(--slate);font-size:12px;margin-top:6px">
+            Lowercase, no spaces. Used in URLs. Preview: <code id="slugPrev">ideas.html?theme=education</code>
+          </div>
+        </div>
+        <div class="form-group"><label>Description</label><textarea name="description" class="form-control" placeholder="Optional description of the theme"></textarea></div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="color:var(--navy);border-color:var(--line-2)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveTheme()">Save Theme</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+if(!Auth.requireRole(['admin','curator'])) throw 0;
+document.getElementById('logoutBtn').onclick = e => { e.preventDefault(); Auth.logout(); };
+
+let themes = [], sessions = [], editingId = null;
+
+(async () => {
+  const d = await BM.load();
+  sessions = d.sessions;
+  const stored = JSON.parse(localStorage.getItem('bm_themes_override') || 'null');
+  themes = stored || d.themes.slice();
+
+  renderStats();
+  render();
+
+  document.getElementById('searchBox').oninput = render;
+})();
+
+function renderStats(){
+  document.getElementById('statThemes').textContent = themes.length;
+  const counts = themes.map(t => ({
+    name: t.name,
+    count: sessions.filter(s => s.themes.includes(t.id)).length
+  }));
+  const top = counts.slice().sort((a,b) => b.count - a.count)[0];
+  document.getElementById('statTop').textContent = top ? top.name : '—';
+  document.getElementById('statTopCount').textContent = top ? `${top.count} sessions` : 'sessions';
+  document.getElementById('statUnused').textContent = counts.filter(c => c.count === 0).length;
+  document.getElementById('statAvg').textContent = counts.length
+    ? Math.round(counts.reduce((a,c) => a + c.count, 0) / counts.length)
+    : 0;
+}
+
+function render(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const list = themes.filter(t => !q || t.name.toLowerCase().includes(q) || t.id.toLowerCase().includes(q));
+  document.getElementById('countLabel').textContent = `${list.length} themes`;
+
+  document.getElementById('rows').innerHTML = list.length
+    ? list.map((t, i) => {
+        const count = sessions.filter(s => s.themes.includes(t.id)).length;
+        return `
+          <tr>
+            <td>${String(i+1).padStart(2,'0')}</td>
+            <td><strong>${t.name}</strong></td>
+            <td><code style="font-size:11.5px">${t.id}</code></td>
+            <td><span class="badge ${count > 0 ? 'badge-gold' : ''}">${count}</span></td>
+            <td class="table-actions">
+              <button class="icon-btn" title="Edit" onclick="openEdit('${t.id}')">✎</button>
+              <button class="icon-btn" title="View" onclick="window.open('../ideas.html?theme=${t.id}','_blank')">↗</button>
+              <button class="icon-btn" title="Delete" onclick="delTh('${t.id}')">🗑</button>
+            </td>
+          </tr>`;
+      }).join('')
+    : `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--slate)">No themes found.</td></tr>`;
+}
+
+function slugPreview(input){
+  const v = input.value.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  document.getElementById('slugPrev').textContent = `ideas.html?theme=${v || 'slug'}`;
+}
+
+function openNew(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'New Theme';
+  document.getElementById('thForm').reset();
+  document.getElementById('slugPrev').textContent = 'ideas.html?theme=slug';
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function openEdit(id){
+  const t = themes.find(x => x.id === id);
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Theme';
+  const f = document.getElementById('thForm');
+  f.id.value = t.id;
+  f.name.value = t.name;
+  f.slug.value = t.id;
+  f.description.value = t.description || '';
+  slugPreview(f.slug);
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function closeModal(){ document.getElementById('modalBack').classList.remove('show'); }
+
+function saveTheme(){
+  const f = document.getElementById('thForm');
+  const slug = f.slug.value.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  if(!slug){ alert('Slug is required'); return; }
+  const data = {
+    id: slug,
+    name: f.name.value,
+    description: f.description.value
+  };
+  if(editingId){
+    // If slug changed, we need to update session references too
+    if(editingId !== slug){
+      sessions.forEach(s => {
+        s.themes = s.themes.map(x => x === editingId ? slug : x);
+      });
+      const i = themes.findIndex(x => x.id === editingId);
+      themes[i] = data;
+    } else {
+      const i = themes.findIndex(x => x.id === editingId);
+      themes[i] = { ...themes[i], ...data };
+    }
+  } else {
+    if(themes.some(x => x.id === slug)){ alert('Slug already exists'); return; }
+    themes.push(data);
+  }
+  localStorage.setItem('bm_themes_override', JSON.stringify(themes));
+  localStorage.setItem('bm_sessions_override', JSON.stringify(sessions));
+  closeModal();
+  renderStats(); render();
+  alert('Theme saved.');
+}
+
+function delTh(id){
+  const count = sessions.filter(s => s.themes.includes(id)).length;
+  if(count > 0){
+    if(!confirm(`This theme is used by ${count} session(s). Delete anyway?`)) return;
+    sessions.forEach(s => { s.themes = s.themes.filter(x => x !== id); });
+    localStorage.setItem('bm_sessions_override', JSON.stringify(sessions));
+  } else {
+    if(!confirm('Delete this theme?')) return;
+  }
+  themes = themes.filter(x => x.id !== id);
+  localStorage.setItem('bm_themes_override', JSON.stringify(themes));
+  renderStats(); render();
+}
+</script>
+</body>
+</html>

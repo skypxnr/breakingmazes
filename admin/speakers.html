@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Speakers — Breaking Mazes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+<div class="admin-layout">
+  <aside class="admin-side">
+    <div class="brand">Breaking <span>Mazes</span></div>
+    <nav>
+      <a href="index.html"><span class="ico">◆</span><span>Dashboard</span></a>
+      <a href="sessions.html"><span class="ico">▶</span><span>Sessions</span></a>
+      <a href="speakers.html" class="active"><span class="ico">◉</span><span>Speakers</span></a>
+      <a href="themes.html"><span class="ico">✎</span><span>Themes</span></a>
+      <a href="clips.html"><span class="ico">✂</span><span>Clips</span></a>
+      <a href="questions.html"><span class="ico">?</span><span>Questions</span></a>
+      <a href="live.html"><span class="ico">●</span><span>Live Control</span></a>
+      <a href="users.html"><span class="ico">◫</span><span>Users &amp; Roles</span></a>
+      <a href="settings.html"><span class="ico">⚙</span><span>Settings</span></a>
+    </nav>
+    <div class="side-foot"><a href="../index.html">← View Site</a><a href="#" id="logoutBtn">Sign Out</a></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <div><h1>Speakers</h1><div class="crumb">Hosts and guests in the Breaking Mazes archive</div></div>
+      <button class="btn btn-gold btn-sm" onclick="openNew()">+ Add Speaker</button>
+    </div>
+
+    <div class="admin-content">
+      <div class="toolbar">
+        <input class="form-control" id="searchBox" placeholder="Search speakers…">
+        <select class="form-control" id="roleFilter" style="max-width:200px">
+          <option value="">All</option>
+          <option value="host">Host only</option>
+          <option value="guest">Guests only</option>
+        </select>
+        <div style="flex:1"></div>
+        <span class="small" style="color:var(--slate)" id="countLabel"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:70px">Photo</th>
+              <th>Name</th>
+              <th>Role / Designation</th>
+              <th>Sessions</th>
+              <th>Type</th>
+              <th style="width:150px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">New Speaker</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <form id="spForm">
+        <input type="hidden" name="id">
+        <div class="form-group"><label>Full Name</label><input name="name" class="form-control" required></div>
+        <div class="form-group"><label>Role / Designation</label><input name="role" class="form-control" placeholder="Former Chairman, Microsoft India"></div>
+        <div class="form-group"><label>Photo URL</label><input name="photo" class="form-control" placeholder="assets/img/name.jpg"></div>
+        <div class="form-group"><label>Short Bio</label><textarea name="bio" class="form-control" placeholder="Optional 2–3 line bio"></textarea></div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" name="isHost" id="hostCheck">
+          <label for="hostCheck" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--navy);margin:0">
+            This speaker is the host (Dr. Peer G. N. Suhail)
+          </label>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="color:var(--navy);border-color:var(--line-2)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveSpeaker()">Save Speaker</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+if(!Auth.requireRole(['admin','curator'])) throw 0;
+document.getElementById('logoutBtn').onclick = e => { e.preventDefault(); Auth.logout(); };
+
+let speakers = [], sessions = [], editingId = null;
+
+(async () => {
+  const d = await BM.load();
+  sessions = d.sessions;
+  const stored = JSON.parse(localStorage.getItem('bm_speakers_override') || 'null');
+  speakers = stored || d.speakers.slice();
+
+  render();
+
+  document.getElementById('searchBox').oninput = render;
+  document.getElementById('roleFilter').onchange = render;
+})();
+
+function render(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const rf = document.getElementById('roleFilter').value;
+  const list = speakers.filter(s =>
+    (!q || s.name.toLowerCase().includes(q) || (s.role||'').toLowerCase().includes(q)) &&
+    (!rf || (rf === 'host' ? s.isHost : !s.isHost))
+  );
+  document.getElementById('countLabel').textContent = `${list.length} speakers`;
+
+  document.getElementById('rows').innerHTML = list.length
+    ? list.map(s => {
+        const count = sessions.filter(x => x.speakerId === s.id || x.hostId === s.id).length;
+        return `
+          <tr>
+            <td>
+              <div style="width:54px;aspect-ratio:1;border-radius:50%;overflow:hidden;border:1px solid var(--line-2)">
+                <img src="${s.photo || ''}" style="width:100%;height:100%;object-fit:cover" alt="">
+              </div>
+            </td>
+            <td><strong>${s.name}</strong></td>
+            <td style="font-size:13px;color:var(--slate)">${s.role || ''}</td>
+            <td>${count}</td>
+            <td>${s.isHost ? '<span class="badge badge-gold">Host</span>' : '<span class="badge">Guest</span>'}</td>
+            <td class="table-actions">
+              <button class="icon-btn" title="Edit" onclick="openEdit('${s.id}')">✎</button>
+              <button class="icon-btn" title="View" onclick="window.open('../voices.html','_blank')">↗</button>
+              <button class="icon-btn" title="Delete" onclick="delSp('${s.id}')">🗑</button>
+            </td>
+          </tr>`;
+      }).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--slate)">No speakers found.</td></tr>`;
+}
+
+function openNew(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'New Speaker';
+  document.getElementById('spForm').reset();
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function openEdit(id){
+  const s = speakers.find(x => x.id === id);
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Speaker';
+  const f = document.getElementById('spForm');
+  f.id.value = s.id;
+  f.name.value = s.name;
+  f.role.value = s.role || '';
+  f.photo.value = s.photo || '';
+  f.bio.value = s.bio || '';
+  f.isHost.checked = !!s.isHost;
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function closeModal(){ document.getElementById('modalBack').classList.remove('show'); }
+
+function saveSpeaker(){
+  const f = document.getElementById('spForm');
+  const data = {
+    id: editingId || ('sp' + Date.now()),
+    name: f.name.value,
+    role: f.role.value,
+    photo: f.photo.value,
+    bio: f.bio.value,
+    isHost: f.isHost.checked
+  };
+  if(editingId){
+    const i = speakers.findIndex(x => x.id === editingId);
+    speakers[i] = { ...speakers[i], ...data };
+  } else {
+    speakers.push(data);
+  }
+  localStorage.setItem('bm_speakers_override', JSON.stringify(speakers));
+  closeModal();
+  render();
+  alert('Speaker saved.');
+}
+
+function delSp(id){
+  if(!confirm('Delete this speaker?')) return;
+  speakers = speakers.filter(x => x.id !== id);
+  localStorage.setItem('bm_speakers_override', JSON.stringify(speakers));
+  render();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <system.webServer>
+    <staticContent>
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+      <mimeMap fileExtension=".webp" mimeType="image/webp" />
+      <mimeMap fileExtension=".svg"  mimeType="image/svg+xml" />
+    </staticContent>
+    <defaultDocument>
+      <files>
+        <clear />
+        <add value="index.html" />
+      </files>
+    </defaultDocument>
+    <httpErrors errorMode="Detailed" />
+  </system.webServer>
+</configuration>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>About — Breaking Mazes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<main>
+  <section class="section" style="background:var(--navy-2);border-bottom:1px solid var(--line);padding:72px 0 56px">
+    <div class="container">
+      <div class="eyebrow mb-16">About</div>
+      <h1 style="font-size:clamp(44px,6vw,80px);max-width:1000px">
+        Conversations that <em style="color:var(--gold);font-style:italic">unmake</em> the maze.
+      </h1>
+      <p class="muted mt-24" style="max-width:660px;font-size:17px">
+        Breaking Mazes is a leadership dialogue series built on a simple conviction: that students deserve direct access to the people who have shaped institutions — not summaries of them.
+      </p>
+    </div>
+  </section>
+
+  <!-- Curator -->
+  <section class="section">
+    <div class="container" style="display:grid;grid-template-columns:1fr 1.2fr;gap:64px;align-items:center">
+      <div style="aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line);background:var(--navy-2)">
+        <img src="assets/img/suhail.jpg" alt="Prof. Dr. Peer G. N. Suhail"
+             style="width:100%;height:100%;object-fit:cover">
+      </div>
+      <div>
+        <div class="eyebrow mb-16">The Curator</div>
+        <h2 style="font-size:clamp(32px,3.6vw,48px);margin-bottom:12px">
+          Prof. (Dr.) Peer G. N. Suhail
+        </h2>
+        <div class="eyebrow mb-24">Founder &amp; Curator, Breaking Mazes</div>
+        <p class="mb-16" style="font-size:16.5px;line-height:1.8">
+          Prof. Suhail has spent his career at the intersection of education, leadership and public life. Breaking Mazes is his attempt to build an archive of first-person insight — a resource that outlasts any single cohort of students.
+        </p>
+        <p class="mb-16" style="font-size:16.5px;line-height:1.8">
+          He curates each session personally, treating the conversation as a discipline rather than a broadcast.
+        </p>
+        <a href="conversations.html" class="btn btn-outline mt-16">Explore the Conversations</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Format -->
+  <section class="section" style="background:var(--navy-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+    <div class="container">
+      <div class="section-head"><h2>The Format</h2><span class="num">Three Commitments</span></div>
+      <div class="grid grid-3">
+        <div>
+          <div class="serif" style="font-size:48px;color:var(--gold);line-height:1;margin-bottom:20px">01</div>
+          <h3 style="font-size:24px;margin-bottom:12px">Dialogue, not interview</h3>
+          <p>Every session is a conversation with a shape — not a Q&amp;A. The questions are as carefully chosen as the speaker.</p>
+        </div>
+        <div>
+          <div class="serif" style="font-size:48px;color:var(--gold);line-height:1;margin-bottom:20px">02</div>
+          <h3 style="font-size:24px;margin-bottom:12px">Students in the room</h3>
+          <p>Students are participants, not audiences. Their questions are recorded and archived as part of the session.</p>
+        </div>
+        <div>
+          <div class="serif" style="font-size:48px;color:var(--gold);line-height:1;margin-bottom:20px">03</div>
+          <h3 style="font-size:24px;margin-bottom:12px">Built as an archive</h3>
+          <p>Each session generates layers — video, clips, ideas, transcript, publication — designed to outlast the moment.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Timeline / archive logic -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head"><h2>The Archive Logic</h2><span class="num">One Session, Many Layers</span></div>
+      <div class="flex gap-16" style="flex-wrap:wrap">
+        <span class="chip">Session</span>
+        <span class="chip">Full Video</span>
+        <span class="chip">Clips</span>
+        <span class="chip">Ideas</span>
+        <span class="chip">Student Questions</span>
+        <span class="chip">Transcript</span>
+        <span class="chip">Book / Publication</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section class="section" style="background:var(--navy-2);border-top:1px solid var(--line)">
+    <div class="container" style="display:grid;grid-template-columns:1fr 1fr;gap:56px">
+      <div>
+        <div class="eyebrow mb-16">Get in Touch</div>
+        <h2 style="font-size:36px;margin-bottom:20px">Bring Breaking Mazes to your campus.</h2>
+        <p class="muted">We partner with institutions who want their students in the room — not in the audience.</p>
+      </div>
+      <form onsubmit="event.preventDefault(); this.querySelector('.alert-ok').style.display='block';">
+        <div class="form-group"><label>Name</label><input class="form-control" required></div>
+        <div class="form-group"><label>Email</label><input class="form-control" type="email" required></div>
+        <div class="form-group"><label>Institution</label><input class="form-control"></div>
+        <div class="form-group"><label>Message</label><textarea class="form-control" required></textarea></div>
+        <button class="btn btn-gold btn-block">Send Message</button>
+        <div class="alert-ok alert alert-success mt-16" style="display:none">Thank you — we'll be in touch.</div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>BM.injectHeader('about'); BM.injectFooter();</script>
+</body>
+</html>

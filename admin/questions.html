@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Questions — Breaking Mazes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+<div class="admin-layout">
+  <aside class="admin-side">
+    <div class="brand">Breaking <span>Mazes</span></div>
+    <nav>
+      <a href="index.html"><span class="ico">◆</span><span>Dashboard</span></a>
+      <a href="sessions.html"><span class="ico">▶</span><span>Sessions</span></a>
+      <a href="speakers.html"><span class="ico">◉</span><span>Speakers</span></a>
+      <a href="themes.html"><span class="ico">✎</span><span>Themes</span></a>
+      <a href="clips.html"><span class="ico">✂</span><span>Clips</span></a>
+      <a href="questions.html" class="active"><span class="ico">?</span><span>Questions</span></a>
+      <a href="live.html"><span class="ico">●</span><span>Live Control</span></a>
+      <a href="users.html"><span class="ico">◫</span><span>Users &amp; Roles</span></a>
+      <a href="settings.html"><span class="ico">⚙</span><span>Settings</span></a>
+    </nav>
+    <div class="side-foot"><a href="../index.html">← View Site</a><a href="#" id="logoutBtn">Sign Out</a></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <div>
+        <h1>Student Questions</h1>
+        <div class="crumb">Review, approve, feature or delete questions from the room</div>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="openNew()">+ Add Question</button>
+    </div>
+
+    <div class="admin-content">
+      <div class="stats">
+        <div class="stat"><div class="label">Total</div><div class="value" id="statTotal">0</div><div class="delta">All questions</div></div>
+        <div class="stat"><div class="label">Pending</div><div class="value" id="statPending">0</div><div class="delta">Awaiting review</div></div>
+        <div class="stat"><div class="label">Approved</div><div class="value" id="statApproved">0</div><div class="delta">Published on site</div></div>
+        <div class="stat"><div class="label">Featured</div><div class="value" id="statFeatured">0</div><div class="delta">On homepage</div></div>
+      </div>
+
+      <div class="toolbar">
+        <input class="form-control" id="searchBox" placeholder="Search by student or text…">
+        <select class="form-control" id="statusFilter" style="max-width:200px">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <select class="form-control" id="sessionFilter" style="max-width:260px"></select>
+        <div style="flex:1"></div>
+        <span class="small" style="color:var(--slate)" id="countLabel"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Year</th>
+              <th>Session</th>
+              <th>Question</th>
+              <th>Status</th>
+              <th style="width:190px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">New Question</h3>
+      <button class="icon-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="qForm">
+        <input type="hidden" name="id">
+        <div class="form-row">
+          <div class="form-group"><label>Student Name</label><input name="student" class="form-control" required></div>
+          <div class="form-group"><label>Year / Institution</label><input name="year" class="form-control"></div>
+        </div>
+        <div class="form-group">
+          <label>Session</label>
+          <select name="sessionId" class="form-control" id="sessionSelect"></select>
+        </div>
+        <div class="form-group">
+          <label>Question</label>
+          <textarea name="question" class="form-control" required placeholder="How do you hold your ground when the system is designed to wear you down?"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select name="status" class="form-control">
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:12px">
+            <label style="display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--navy)">
+              <input type="checkbox" name="featured" id="featCheckQ"> Feature this question
+            </label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="color:var(--navy);border-color:var(--line-2)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveQuestion()">Save Question</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+if(!Auth.requireRole(['admin','curator','editor'])) throw 0;
+document.getElementById('logoutBtn').onclick = e => { e.preventDefault(); Auth.logout(); };
+
+let questions = [], sessions = [], editingId = null;
+
+(async () => {
+  const d = await BM.load();
+  sessions = d.sessions;
+
+  const extra = JSON.parse(localStorage.getItem('bm_questions_override') || '[]');
+  const seed = d.studentQuestions.map(q => ({ status:'approved', featured:false, ...q }));
+  questions = [...seed, ...extra];
+
+  document.getElementById('sessionSelect').innerHTML =
+    sessions.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+  document.getElementById('sessionFilter').innerHTML =
+    `<option value="">All sessions</option>` +
+    sessions.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+
+  renderStats();
+  render();
+
+  document.getElementById('searchBox').oninput = render;
+  document.getElementById('statusFilter').onchange = render;
+  document.getElementById('sessionFilter').onchange = render;
+})();
+
+function renderStats(){
+  document.getElementById('statTotal').textContent = questions.length;
+  document.getElementById('statPending').textContent = questions.filter(q => q.status === 'pending').length;
+  document.getElementById('statApproved').textContent = questions.filter(q => q.status === 'approved').length;
+  document.getElementById('statFeatured').textContent = questions.filter(q => q.featured).length;
+}
+
+function render(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const st = document.getElementById('statusFilter').value;
+  const sf = document.getElementById('sessionFilter').value;
+
+  const list = questions.filter(x =>
+    (!q || (x.student || '').toLowerCase().includes(q) || (x.question || '').toLowerCase().includes(q)) &&
+    (!st || x.status === st) &&
+    (!sf || x.sessionId === sf)
+  );
+
+  document.getElementById('countLabel').textContent = `${list.length} questions`;
+
+  document.getElementById('rows').innerHTML = list.length
+    ? list.map(x => {
+        const s = sessions.find(z => z.id === x.sessionId);
+        const statusBadge = x.status === 'approved'
+          ? '<span class="badge badge-success">Approved</span>'
+          : x.status === 'rejected'
+            ? '<span class="badge" style="border-color:#b14747;color:#b14747">Rejected</span>'
+            : '<span class="badge badge-gold">Pending</span>';
+        return `
+          <tr>
+            <td><strong>${x.student || '—'}</strong></td>
+            <td>${x.year || '—'}</td>
+            <td>${s ? s.title : x.sessionId}</td>
+            <td style="max-width:420px">${x.question}
+              ${x.featured ? ' <span class="badge badge-gold" style="margin-left:6px">★</span>' : ''}
+            </td>
+            <td>${statusBadge}</td>
+            <td class="table-actions">
+              ${x.status !== 'approved' ? `<button class="icon-btn" title="Approve" onclick="setStatus('${x.id}','approved')">✓</button>` : ''}
+              ${x.status !== 'rejected' ? `<button class="icon-btn" title="Reject" onclick="setStatus('${x.id}','rejected')">✕</button>` : ''}
+              <button class="icon-btn" title="Feature" onclick="toggleFeatured('${x.id}')">★</button>
+              <button class="icon-btn" title="Edit" onclick="openEdit('${x.id}')">✎</button>
+              <button class="icon-btn" title="Delete" onclick="delQ('${x.id}')">🗑</button>
+            </td>
+          </tr>`;
+      }).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--slate)">No questions match your filters.</td></tr>`;
+}
+
+function persist(){
+  // Only the non-seed questions go to override storage
+  const seedIds = new Set(questions.slice(0, 0).map(q => q.id)); // keep seed in JSON
+  localStorage.setItem('bm_questions_override', JSON.stringify(questions));
+}
+
+function setStatus(id, status){
+  const q = questions.find(x => x.id === id);
+  q.status = status;
+  persist();
+  renderStats(); render();
+}
+
+function toggleFeatured(id){
+  const q = questions.find(x => x.id === id);
+  q.featured = !q.featured;
+  persist();
+  renderStats(); render();
+}
+
+function openNew(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'New Question';
+  document.getElementById('qForm').reset();
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function openEdit(id){
+  const x = questions.find(z => z.id === id);
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Question';
+  const f = document.getElementById('qForm');
+  f.id.value = x.id;
+  f.student.value = x.student || '';
+  f.year.value = x.year || '';
+  f.sessionId.value = x.sessionId;
+  f.question.value = x.question;
+  f.status.value = x.status || 'pending';
+  f.featured.checked = !!x.featured;
+  document.getElementById('modalBack').classList.add('show');
+}
+
+function closeModal(){ document.getElementById('modalBack').classList.remove('show'); }
+
+function saveQuestion(){
+  const f = document.getElementById('qForm');
+  const data = {
+    id: editingId || ('q' + Date.now()),
+    student: f.student.value,
+    year: f.year.value,
+    sessionId: f.sessionId.value,
+    question: f.question.value,
+    status: f.status.value,
+    featured: f.featured.checked
+  };
+  if(editingId){
+    const i = questions.findIndex(z => z.id === editingId);
+    questions[i] = { ...questions[i], ...data };
+  } else {
+    questions.push(data);
+  }
+  persist();
+  closeModal();
+  renderStats(); render();
+  alert('Question saved.');
+}
+
+function delQ(id){
+  if(!confirm('Delete this question?')) return;
+  questions = questions.filter(x => x.id !== id);
+  persist();
+  renderStats(); render();
+}
+</script>
+</body>
+</html>

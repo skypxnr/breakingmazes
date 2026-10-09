@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Conversations — Breaking Mazes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<main>
+  <section class="section" style="padding:52px 0 32px">
+    <div class="container">
+      <div class="eyebrow mb-16">Archive</div>
+      <h1 style="font-size:clamp(40px,5.5vw,72px)">The Conversations</h1>
+      <p class="muted mt-16" style="max-width:640px;font-size:16px">
+        Every session is a dialogue. Browse by speaker, theme, or search — and enter the maze from wherever you are.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" style="padding:24px 0 80px">
+    <div class="container" style="display:grid;grid-template-columns:240px 1fr;gap:56px">
+
+      <aside>
+        <div class="mb-24">
+          <div class="eyebrow mb-16">Search</div>
+          <input class="form-control" id="searchInput" placeholder="Search title or speaker…">
+        </div>
+
+        <div class="mb-24">
+          <div class="eyebrow mb-16">Theme</div>
+          <div id="themeFilters" class="flex gap-8" style="flex-wrap:wrap"></div>
+        </div>
+
+        <div class="mb-24">
+          <div class="eyebrow mb-16">Speaker</div>
+          <select class="form-control" id="speakerFilter">
+            <option value="">All speakers</option>
+          </select>
+        </div>
+
+        <div class="mb-24">
+          <div class="eyebrow mb-16">Sort</div>
+          <select class="form-control" id="sortFilter">
+            <option value="number">Session number</option>
+            <option value="date">Most recent</option>
+            <option value="title">Title A–Z</option>
+          </select>
+        </div>
+
+        <button class="btn btn-outline btn-block btn-sm" onclick="clearFilters()">Clear Filters</button>
+      </aside>
+
+      <div>
+        <div class="between center mb-24" style="display:flex;padding-bottom:14px;border-bottom:1px solid var(--line)">
+          <h2 style="font-size:28px">All Sessions</h2>
+          <span class="eyebrow" id="resultCount">0 sessions</span>
+        </div>
+
+        <div class="grid grid-3" id="sessionGrid"></div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+(async () => {
+  BM.injectHeader('conversations');
+  BM.injectFooter();
+  const d = await BM.load();
+
+  // Theme chips
+  const themeBox = document.getElementById('themeFilters');
+  themeBox.innerHTML = d.themes.map(t =>
+    `<button class="chip" data-theme="${t.id}">${t.name}</button>`
+  ).join('');
+
+  // Speaker dropdown
+  const spBox = document.getElementById('speakerFilter');
+  d.speakers.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s.id; o.textContent = s.name;
+    spBox.appendChild(o);
+  });
+
+  const PER_PAGE = 6;
+  let state = { page:1, themes:[], speaker:'', q:'', sort:'number' };
+
+  function filtered(){
+    let list = BM.publishedSessions().slice();
+    if(state.themes.length) list = list.filter(s => s.themes.some(t => state.themes.includes(t)));
+    if(state.speaker) list = list.filter(s => s.speakerId === state.speaker);
+    if(state.q){
+      const q = state.q.toLowerCase();
+      list = list.filter(s => {
+        const sp = BM.speaker(s.speakerId)?.name.toLowerCase() || '';
+        return s.title.toLowerCase().includes(q) || sp.includes(q);
+      });
+    }
+    if(state.sort === 'number') list.sort((a,b) => a.number - b.number);
+    if(state.sort === 'date') list.sort((a,b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+    if(state.sort === 'title') list.sort((a,b) => a.title.localeCompare(b.title));
+    return list;
+  }
+
+  function render(){
+    const list = filtered();
+    const total = list.length;
+    const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+    if(state.page > pages) state.page = pages;
+    const start = (state.page - 1) * PER_PAGE;
+    const slice = list.slice(start, start + PER_PAGE);
+
+    document.getElementById('resultCount').textContent =
+      `${total} session${total === 1 ? '' : 's'}`;
+
+    document.getElementById('sessionGrid').innerHTML = slice.length
+      ? slice.map(BM.cardHTML.bind(BM)).join('')
+      : `<div style="grid-column:1/-1;padding:56px;text-align:center;border:1px dashed var(--line)">
+           <p class="muted">No sessions match your filters.</p>
+         </div>`;
+
+    // Pagination
+    const pgn = document.getElementById('pagination');
+    if(pages <= 1){ pgn.innerHTML = ''; return; }
+    let html = '';
+    if(state.page > 1) html += `<a data-page="${state.page-1}">←</a>`;
+    for(let i = 1; i <= pages; i++){
+      html += `<a data-page="${i}" class="${i===state.page?'active':''}">${i}</a>`;
+    }
+    if(state.page < pages) html += `<a data-page="${state.page+1}">→</a>`;
+    pgn.innerHTML = html;
+    pgn.querySelectorAll('a').forEach(a => {
+      a.onclick = () => { state.page = parseInt(a.dataset.page); render(); window.scrollTo({top:320,behavior:'smooth'}); };
+    });
+  }
+
+  // Events
+  themeBox.querySelectorAll('.chip').forEach(c => {
+    c.onclick = () => {
+      const t = c.dataset.theme;
+      if(state.themes.includes(t)){
+        state.themes = state.themes.filter(x => x !== t);
+        c.classList.remove('active');
+      } else {
+        state.themes.push(t);
+        c.classList.add('active');
+      }
+      state.page = 1; render();
+    };
+  });
+  spBox.onchange = e => { state.speaker = e.target.value; state.page = 1; render(); };
+  document.getElementById('sortFilter').onchange = e => { state.sort = e.target.value; render(); };
+  document.getElementById('searchInput').oninput = e => { state.q = e.target.value; state.page = 1; render(); };
+
+  window.clearFilters = () => {
+    state = { page:1, themes:[], speaker:'', q:'', sort:'number' };
+    themeBox.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    spBox.value = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('sortFilter').value = 'number';
+    render();
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>

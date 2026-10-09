@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Voices — Breaking Mazes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<main>
+  <section class="section" style="padding:52px 0 32px">
+    <div class="container">
+      <div class="eyebrow mb-16">The People</div>
+      <h1 style="font-size:clamp(40px,5.5vw,72px)">Voices</h1>
+      <p class="muted mt-16" style="max-width:660px;font-size:16px">
+        The individuals who have shaped institutions, ideas and systems — and agreed to sit down and speak plainly.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" style="padding:24px 0 40px">
+    <div class="container">
+      <div class="between center mb-24" style="display:flex;padding-bottom:14px;border-bottom:1px solid var(--line);gap:16px;flex-wrap:wrap">
+        <div class="filters" style="margin:0">
+          <button class="chip active" data-filter="all">All</button>
+          <button class="chip" data-filter="host">Host</button>
+          <button class="chip" data-filter="guest">Guests</button>
+        </div>
+        <input class="form-control" id="searchVoices" placeholder="Search voices…" style="max-width:280px;padding:9px 14px">
+      </div>
+
+      <div class="grid grid-4" id="voiceGrid"></div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--navy-2);border-top:1px solid var(--line);margin-top:40px">
+    <div class="container">
+      <div class="section-head"><h2>Featured Voices</h2><span class="num">Selected</span></div>
+      <div class="grid grid-3" id="featuredVoiceSessions"></div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+(async () => {
+  BM.injectHeader('voices');
+  BM.injectFooter();
+  const d = await BM.load();
+
+  let filter = 'all';
+  let q = '';
+
+  function render(){
+    let list = d.speakers.slice();
+    if(filter === 'host') list = list.filter(s => s.isHost);
+    if(filter === 'guest') list = list.filter(s => !s.isHost);
+    if(q){
+      const t = q.toLowerCase();
+      list = list.filter(s => s.name.toLowerCase().includes(t) || (s.role || '').toLowerCase().includes(t));
+    }
+    const grid = document.getElementById('voiceGrid');
+    if(!list.length){
+      grid.innerHTML = `<div style="grid-column:1/-1;padding:56px;text-align:center;border:1px dashed var(--line)">
+        <p class="muted">No voices found.</p>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = list.map(sp => {
+      const sessions = d.sessions.filter(s => s.speakerId === sp.id || s.hostId === sp.id);
+      const sessionLabel = sessions.length === 1 ? '1 session' : `${sessions.length} sessions`;
+      return `
+        <a class="card" href="conversations.html?speaker=${sp.id}">
+          <div class="card-img" style="aspect-ratio:4/5">
+            <img src="${sp.photo}" alt="${sp.name}" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h4>${sp.name}</h4>
+            <div class="role">${sp.role || ''}</div>
+            <div class="meta mt-8"><span>${sessionLabel}</span>${sp.isHost?'<span>·</span><span>Host</span>':''}</div>
+          </div>
+        </a>`;
+    }).join('');
+  }
+
+  document.querySelectorAll('[data-filter]').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('[data-filter]').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      filter = b.dataset.filter;
+      render();
+    };
+  });
+  document.getElementById('searchVoices').oninput = e => { q = e.target.value; render(); };
+
+  // Featured voice sessions
+  document.getElementById('featuredVoiceSessions').innerHTML =
+    BM.featuredSessions().slice(0,3).map(BM.cardHTML.bind(BM)).join('');
+
+  render();
+})();
+</script>
+</body>
+</html>

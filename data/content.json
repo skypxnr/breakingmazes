@@ -1,0 +1,118 @@
+{
+  "site": {
+    "title": "Breaking Mazes",
+    "tagline": "A Leadership Dialogue Series",
+    "liveUrl": "",
+    "liveActive": false,
+    "liveTitle": "Can Young India Lead the World?"
+  },
+  "themes": [
+    {"id":"education","name":"Education"},
+    {"id":"leadership","name":"Leadership"},
+    {"id":"governance","name":"Governance"},
+    {"id":"ai","name":"AI"},
+    {"id":"innovation","name":"Innovation"},
+    {"id":"entrepreneurship","name":"Entrepreneurship"},
+    {"id":"skills","name":"Skills"},
+    {"id":"youth","name":"Youth"}
+  ],
+  "speakers": [
+    {"id":"suhail","name":"Dr. Peer G. N. Suhail","role":"Host, Breaking Mazes","photo":"assets/img/suhail.jpg","isHost":true},
+    {"id":"ravi","name":"Ravi Venkatesan","role":"Former Chairman, Microsoft India","photo":"assets/img/ravi.jpg"},
+    {"id":"arun","name":"Arun Maira","role":"Former Member, Planning Commission of India","photo":"assets/img/arun.jpg"},
+    {"id":"manish","name":"Dr. Manish Kumar","role":"Former MD & CEO, NSDC","photo":"assets/img/manish.jpg"},
+    {"id":"declan","name":"Dr. Declan Doogan","role":"Chairman & CEO, Causeway Therapeutics · Former WW Head of R&D, Pfizer","photo":"assets/img/declan.jpg"},
+    {"id":"mac","name":"Simon 'Mac' McKenzie","role":"CEO, The Bridge Institute, UK","photo":"assets/img/mac.jpg"},
+    {"id":"rajiv","name":"Dr. Rajiv Kumar","role":"Former Vice Chairman, NITI Aayog","photo":"assets/img/rajiv.jpg"},
+    {"id":"anil","name":"Mr. Anil Swarup, IAS (Retd.)","role":"Former Secretary, School Education & Literacy · Former Coal Secretary, Govt. of India","photo":"assets/img/anil.jpg"}
+  ],
+  "sessions": [
+    {
+      "id":"s01","number":1,
+      "title":"Can Young India Lead the World?",
+      "hostId":"suhail","speakerId":"ravi",
+      "themes":["youth","leadership","entrepreneurship"],
+      "poster":"assets/img/poster-young-india.jpg",
+      "youtubeId":"dQw4w9WgXcQ",
+      "duration":"52:14","publishedAt":"2025-01-15",
+      "status":"published","featured":true,
+      "synopsis":"Ravi Venkatesan on why India's demographic moment is a leadership question, not a numbers game.",
+      "pullQuote":"Ideas. Leadership. Impact. The future is in Young India.",
+      "pills":["Innovation","Governance","Mass Entrepreneurship"]
+    },
+    {
+      "id":"s02","number":2,
+      "title":"Are We Educating for Jobs, Not Life?",
+      "hostId":"suhail","speakerId":"arun",
+      "themes":["education","skills"],
+      "poster":"assets/img/poster-jobs-not-life.jpg",
+      "youtubeId":"dQw4w9WgXcQ",
+      "duration":"47:32","publishedAt":"2025-02-02",
+      "status":"published","featured":false,
+      "synopsis":"Arun Maira in conversation with Dr. Peer G. N. Suhail on what education is actually for."
+    },
+    {
+      "id":"s03","number":3,
+      "title":"Can Education Survive AI?",
+      "hostId":"suhail","speakerId":"manish",
+      "themes":["ai","education"],
+      "poster":"assets/img/poster-education-ai.jpg",
+      "youtubeId":"dQw4w9WgXcQ",
+      "duration":"54:08","publishedAt":"2025-02-20",
+      "status":"published","featured":true,
+      "synopsis":"AI vs Human Judgement — Dr. Manish Kumar on what remains irreducibly human.",
+      "subtitle":"AI vs Human Judgement"
+    },
+    {
+      "id":"s04","number":4,
+      "title":"From Science to Strategy",
+      "subtitle":"Innovation Without Borders",
+      "hostId":"suhail","speakerId":"declan",
+      "themes":["innovation","entrepreneurship"],
+      "poster":"assets/img/poster-science-strategy.jpg",
+      "youtubeId":"dQw4w9WgXcQ",
+      "duration":"58:45","publishedAt":"2025-03-05",
+      "status":"published","featured":false,
+      "synopsis":"Dr. Declan Doogan on science, strategy and the entrepreneurial mindset.",
+      "pills":["Science","Strategy","Entrepreneurial Mindset"]
+    },
+    {
+      "id":"s05","number":5,
+      "title":"Can Leadership Be Taught?",
+      "hostId":"suhail","speakerId":"mac",
+      "themes":["leadership"],
+      "poster":"assets/img/poster-leadership-taught.jpg",
+      "youtubeId":"dQw4w9WgXcQ",
+      "duration":"49:22","publishedAt":"2025-03-22",
+      "status":"published","featured":false,
+      "synopsis":"Simon 'Mac' McKenzie with Dr. Peer G. N. Suhail."
+    },
+    {
+      "id":"s06","number":6,
+      "title":"India 2047 — Developed or Dreaming?",
+      "hostId":"suhail","speakerId":"rajiv",
+      "themes":["governance","youth"],
+      "poster":"assets/img/poster-india-2047.jpg",
+      "youtubeId":"dQw4w9WgXcQ",
+      "duration":"61:10","publishedAt":"2025-04-10",
+      "status":"published","featured":true,
+      "synopsis":"Dr. Rajiv Kumar on the gap between ambition and execution."
+    },
+    {
+      "id":"s07","number":7,
+      "title":"System is Broken. How Do You Win?",
+      "hostId":"suhail","speakerId":"anil",
+      "themes":["governance","leadership"],
+      "poster":"assets/img/poster-system-broken.jpg",
+      "youtubeId":"dQw4w9WgXcQ",
+      "duration":"56:38","publishedAt":"2025-04-28",
+      "status":"published","featured":true,
+      "synopsis":"Mr. Anil Swarup on navigating the maze of bureaucracy, power and change."
+    }
+  ],
+  "studentQuestions": [
+    {"id":"q1","sessionId":"s07","student":"Aditya Sharma","year":"3rd Year","question":"How do you hold your ground when the system is designed to wear you down?"},
+    {"id":"q2","sessionId":"s07","student":"Sneha Iyer","year":"2nd Year","question":"Is patience a virtue, or a trap for young reformers?"},
+    {"id":"q3","sessionId":"s06","student":"Rahul Mehta","year":"4th Year","question":"What did you learn too late?"}
+  ]
+}
