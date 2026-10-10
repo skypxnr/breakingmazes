@@ -58,6 +58,7 @@ router.post('/register', async (req, res) => {
 });
 
 // LOGIN
+// LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -68,35 +69,44 @@ router.post('/login', async (req, res) => {
     
     const connection = await pool.getConnection();
     
-    // Find user
+    // Find user - simplified query
     const [users] = await connection.query(
-      'SELECT u.id, u.name, u.email, u.password_hash, r.slug as role FROM users u ' +
-      'LEFT JOIN user_roles ur ON u.id = ur.user_id ' +
-      'LEFT JOIN roles r ON ur.role_id = r.id ' +
-      'WHERE u.email = ?',
+      'SELECT id, name, email, password_hash FROM users WHERE email = ?',
       [email]
     );
     
     connection.release();
     
     if (users.length === 0) {
+      console.log('User not found:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
     const user = users[0];
+    console.log('User found:', user.email);
     
     // Verify password
-    const validPassword = await bcrypt.compare(password, user.password_hash);
+    let validPassword = false;
+    try {
+      validPassword = await bcrypt.compare(password, user.password_hash);
+    } catch (bcryptError) {
+      console.error('Bcrypt error:', bcryptError);
+      return res.status(500).json({ error: 'Password verification failed: ' + bcryptError.message });
+    }
+    
     if (!validPassword) {
+      console.log('Invalid password for:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
     // Create JWT
     const token = jwt.sign(
-      { id: user.id, name: user.name, email: user.email, role: user.role || 'student' },
+      { id: user.id, name: user.name, email: user.email, role: 'student' },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRY }
     );
+    
+    console.log('Login successful:', email);
     
     res.json({
       message: 'Logged in successfully',
@@ -105,10 +115,11 @@ router.post('/login', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role || 'student'
+        role: 'student'
       }
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: error.message });
   }
 });
