@@ -1,7 +1,21 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const router = express.Router();
 const pool = require('../config/db');
+
+// Helper to format session keys to match frontend expectations
+function transformSession(s) {
+  if (!s) return null;
+  return {
+    ...s,
+    speakerId: s.speaker_id,
+    hostId: s.host_id,
+    number: s.session_number,
+    poster: s.poster_url,
+    youtubeId: s.video_youtube_id,
+    duration: s.video_duration,
+    isFeatured: s.is_featured
+  };
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -15,7 +29,7 @@ router.get('/', async (req, res) => {
        ORDER BY s.session_number DESC`
     );
     connection.release();
-    res.json(sessions);
+    res.json(sessions.map(transformSession));
   } catch (error) {
     console.error('Error fetching sessions:', error);
     res.status(500).json({ error: error.message });
@@ -45,7 +59,7 @@ router.get('/:id', async (req, res) => {
     );
     
     connection.release();
-    res.json({ ...sessions[0], themes: themes.map(t => t.theme_id) });
+    res.json({ ...transformSession(sessions[0]), themes: themes.map(t => t.theme_id) });
   } catch (error) {
     console.error('Error fetching session:', error);
     res.status(500).json({ error: error.message });
