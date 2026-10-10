@@ -101,18 +101,11 @@ router.post('/login', async (req, res) => {
     }
     
     // Create JWT
-<<<<<<< HEAD
-const token = jwt.sign(
-  { id: user.id, name: user.name, email: user.email, role: 'student' },
-  process.env.JWT_SECRET
-);
-=======
     const token = jwt.sign(
       { id: user.id, name: user.name, email: user.email, role: 'student' },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRY }
     );
->>>>>>> parent of 1d924a1 (Update auth.js)
     
     console.log('Login successful:', email);
     
