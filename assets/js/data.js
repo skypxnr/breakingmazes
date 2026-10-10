@@ -4,10 +4,10 @@
 const BM = {
   data: null,
 
-  get apiBase() {
-    if (location.protocol === 'file:') return 'https://breakingmazes-production.up.railway.app/api';
-    return `${location.origin}/api`;
-  },
+get apiBase() {
+  // Always use the production API
+  return 'https://breakingmazes-production.up.railway.app/api';
+},
 
   authHeaders() {
     const token = localStorage.getItem('bm_token');
