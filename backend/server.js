@@ -45,9 +45,9 @@ app.get('/api/db-test', async (req, res) => {
 });
 
 // Serve frontend (everything else goes to index.html)
-app.use(express.static(path.join(__dirname, '../BreakingMazes')));
+app.use(express.static(path.join(__dirname, '..')));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../BreakingMazes/index.html'));
+  res.sendFile(path.join(__dirname, '../index.html'));
 });
 
 // Start server
