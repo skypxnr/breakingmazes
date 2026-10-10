@@ -9,6 +9,7 @@ const sessionsRoutes = require('./routes/sessions');
 const speakersRoutes = require('./routes/speakers');
 const themesRoutes = require('./routes/themes');
 const questionsRoutes = require('./routes/questions');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api/sessions', sessionsRoutes);
 app.use('/api/speakers', speakersRoutes);
 app.use('/api/themes', themesRoutes);
 app.use('/api/questions', questionsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Test routes
 app.get('/api/test', (req, res) => {
