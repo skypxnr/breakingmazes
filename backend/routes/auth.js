@@ -70,7 +70,6 @@ router.post('/login', async (req, res) => {
     
     const connection = await pool.getConnection();
     
-    // Find user - simplified query
     const [users] = await connection.query(
       'SELECT id, name, email, password_hash FROM users WHERE email = ?',
       [email]
@@ -79,49 +78,29 @@ router.post('/login', async (req, res) => {
     connection.release();
     
     if (users.length === 0) {
-      console.log('User not found:', email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'User not found in database' });
     }
     
     const user = users[0];
-    console.log('User found:', user.email);
-    
-    // Verify password
-    let validPassword = false;
-    try {
-      validPassword = await bcrypt.compare(password, user.password_hash);
-    } catch (bcryptError) {
-      console.error('Bcrypt error:', bcryptError);
-      return res.status(500).json({ error: 'Password verification failed: ' + bcryptError.message });
-    }
+    const validPassword = await bcrypt.compare(password, user.password_hash);
     
     if (!validPassword) {
-      console.log('Invalid password for:', email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid password' });
     }
     
-    // Create JWT
-const token = jwt.sign(
-  { id: user.id, name: user.name, email: user.email, role: 'student' },
-  process.env.JWT_SECRET,
-  { expiresIn: '1d' }
-);
+    const token = jwt.sign(
+      { id: user.id, name: user.name, email: user.email, role: 'student' },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
     
-    console.log('Login successful:', email);
-    
-    res.json({
-      message: 'Logged in successfully',
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: 'student'
-      }
-    });
+    res.json({ message: 'Success', token, user });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: error.message });
+    // THIS SENDS THE EXACT ERROR BACK TO YOUR BROWSER INSTEAD OF A GENERIC 500
+    res.status(500).json({ 
+      error: error.message, 
+      stack: error.stack 
+    });
   }
 });
 
