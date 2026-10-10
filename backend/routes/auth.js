@@ -1,24 +1,10 @@
+
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
-
-// Custom lightweight JWT generator using native Node crypto (Zero external library bugs)
-function generateToken(payload, secret) {
-  const header = JSON.stringify({ alg: 'HS256', typ: 'JWT' });
-  const encodedHeader = Buffer.from(header).toString('base64url');
-  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  
-  const signatureInput = `${encodedHeader}.${encodedPayload}`;
-  const signature = crypto
-    .createHmac('sha256', secret)
-    .update(signatureInput)
-    .digest('base64url');
-    
-  return `${encodedHeader}.${encodedPayload}.${signature}`;
-}
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -73,6 +59,7 @@ router.post('/register', async (req, res) => {
 });
 
 // LOGIN
+// LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -83,6 +70,7 @@ router.post('/login', async (req, res) => {
     
     const connection = await pool.getConnection();
     
+    // Find user - simplified query
     const [users] = await connection.query(
       'SELECT id, name, email, password_hash FROM users WHERE email = ?',
       [email]
@@ -91,30 +79,48 @@ router.post('/login', async (req, res) => {
     connection.release();
     
     if (users.length === 0) {
-      return res.status(401).json({ error: 'User not found in database' });
+      console.log('User not found:', email);
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
     
     const user = users[0];
-    const validPassword = await bcrypt.compare(password, user.password_hash);
+    console.log('User found:', user.email);
     
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid password' });
+    // Verify password
+    let validPassword = false;
+    try {
+      validPassword = await bcrypt.compare(password, user.password_hash);
+    } catch (bcryptError) {
+      console.error('Bcrypt error:', bcryptError);
+      return res.status(500).json({ error: 'Password verification failed: ' + bcryptError.message });
     }
     
-    const secret = process.env.JWT_SECRET || 'fallback_secret_123';
+    if (!validPassword) {
+      console.log('Invalid password for:', email);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     
-    // Generate token securely via native crypto
-    const token = generateToken(
-      { id: user.id, name: user.name, email: user.email, role: 'student' },
-      secret
-    );
+    // Create JWT
+const token = jwt.sign(
+  { id: user.id, name: user.name, email: user.email, role: 'student' },
+  process.env.JWT_SECRET
+);
     
-    res.json({ message: 'Success', token, user });
-  } catch (error) {
-    res.status(500).json({ 
-      error: error.message, 
-      stack: error.stack 
+    console.log('Login successful:', email);
+    
+    res.json({
+      message: 'Logged in successfully',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: 'student'
+      }
     });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
