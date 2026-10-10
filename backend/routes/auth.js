@@ -1,10 +1,24 @@
-
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+
+// Custom lightweight JWT generator using native Node crypto (Zero external library bugs)
+function generateToken(payload, secret) {
+  const header = JSON.stringify({ alg: 'HS256', typ: 'JWT' });
+  const encodedHeader = Buffer.from(header).toString('base64url');
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  
+  const signatureInput = `${encodedHeader}.${encodedPayload}`;
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(signatureInput)
+    .digest('base64url');
+    
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -59,7 +73,6 @@ router.post('/register', async (req, res) => {
 });
 
 // LOGIN
-// LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -87,16 +100,17 @@ router.post('/login', async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid password' });
     }
-    const secret = process.env.JWT_SECRET || 'dev_breaking_mazes_secret_key_12345';
-    const token = jwt.sign(
-  { id: user.id, name: user.name, email: user.email, role: 'student' },
-  secret,
-  { expiresIn: '24h' } // Use explicit string format '24h' or '7d'
-);
+    
+    const secret = process.env.JWT_SECRET || 'fallback_secret_123';
+    
+    // Generate token securely via native crypto
+    const token = generateToken(
+      { id: user.id, name: user.name, email: user.email, role: 'student' },
+      secret
+    );
     
     res.json({ message: 'Success', token, user });
   } catch (error) {
-    // THIS SENDS THE EXACT ERROR BACK TO YOUR BROWSER INSTEAD OF A GENERIC 500
     res.status(500).json({ 
       error: error.message, 
       stack: error.stack 
