@@ -87,12 +87,12 @@ router.post('/login', async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid password' });
     }
-    
+    const secret = process.env.JWT_SECRET || 'dev_breaking_mazes_secret_key_12345';
     const token = jwt.sign(
-      { id: user.id, name: user.name, email: user.email, role: 'student' },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+  { id: user.id, name: user.name, email: user.email, role: 'student' },
+  secret,
+  { expiresIn: '24h' } // Use explicit string format '24h' or '7d'
+);
     
     res.json({ message: 'Success', token, user });
   } catch (error) {
