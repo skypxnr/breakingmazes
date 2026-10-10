@@ -103,8 +103,7 @@ router.post('/login', async (req, res) => {
     // Create JWT
 const token = jwt.sign(
   { id: user.id, name: user.name, email: user.email, role: 'student' },
-  process.env.JWT_SECRET,
-  
+  process.env.JWT_SECRET
 );
     
     console.log('Login successful:', email);
