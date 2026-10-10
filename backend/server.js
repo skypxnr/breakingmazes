@@ -44,9 +44,9 @@ app.get('/api/db-test', async (req, res) => {
   }
 });
 
-// Serve frontend (everything else goes to index.html)
+// Serve frontend (everything else goes to index.html) - Fixed for Express 5 using Regex
 app.use(express.static(path.join(__dirname, '..')));
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../index.html'));
 });
 
